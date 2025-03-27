@@ -35,6 +35,11 @@ public class Machine2MachineClient
         _tokenRequestParameters = tokenRequestParameters;
     }
 
+    public string GetAccessToken()
+    {
+        return _persistedAccessToken;
+    }
+
     public async Task CallApiWithToken()
     {
         using var httpClient = new HttpClient();

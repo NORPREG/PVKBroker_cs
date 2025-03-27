@@ -1,8 +1,41 @@
 ﻿using System.CommandLine;
 using HelseId.Samples.ClientCredentials.Client;
 using HelseId.Samples.ClientCredentials.Configuration;
+using System.Collections.Generic;
+using Microsoft.EntityFrameworkCore;
+
 
 namespace HelseId.Samples.ClientCredentials;
+
+public class TestDbContext : DbContext
+{
+    public DbSet<bitjTestTab2> bitjTestTabs2 {  get; set; }
+
+    protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder) {
+        optionsBuilder.UseSqlServer(
+            @"Server=;Database=ProtonRegister_test;ConnectRetryCount=0");
+    }
+
+    protected override void OnModelCreating(ModelBuilder modelBuilder)
+    {
+        modelBuilder
+            .Entity<bitjTestTab2>(
+                eb =>
+                {
+                    eb.HasNoKey();
+                }
+            );
+    }
+
+
+}
+
+[Keyless]
+public class bitjTestTab2
+{
+    public string TstValue { get; set; }
+    public int TstKey { get; set; }
+}
 
 // This file is used for bootstrapping the example. Nothing of interest here.
 static class Program
@@ -42,6 +75,20 @@ static class Program
     private static async Task<bool> CallApiWithToken(Machine2MachineClient client)
     {
         await client.CallApiWithToken();
+
+        // Store access token in DB
+        string accessToken = client.GetAccessToken().ToString();
+
+        using (var db = new TestDbContext())
+        {
+            var test = new bitjTestTab2 { TstValue = accessToken, TstKey = 4 };
+            // db.bitjTestTabs2.Add(test);
+            db.Database.ExecuteSqlRaw("INSERT INTO dbo.bitjTestTab2 (TstValue, TstKey) VALUES ({0}, {1})", accessToken, "4");
+            // db.SaveChanges();
+            Console.WriteLine("Added access token to database");
+        }
+        // Console.WriteLine("Added access token to database: " + accessToken);
+
         return ShouldCallAgain();
     }
 
