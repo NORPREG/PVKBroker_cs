@@ -51,10 +51,14 @@ namespace HelseId.Samples.PVKBroker.Kodeliste
         static public List<string> GetPatients()
         {
             var dbCon = DBConnection.Instance();
+
+            // Temporary MySQL server, dummy values & contents
+            // Move to configuration toml file
             dbCon.Server = "localhost";
             dbCon.DatabaseName = "kodeliste";
             dbCon.UserName = "cs";
             dbCon.Password = "InitializeComponent547";
+
             List<string> pasienter = new List<string>();
 
             if (dbCon.IsConnected())
