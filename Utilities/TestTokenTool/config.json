@@ -1,8 +1,0 @@
-{
-  "Authentication": {
-    "ApiKey": "YOUR_API_KEY_HERE"
-  },
-  "TTT": {
-    "service-endpoint": "https://helseid-ttt.test.nhn.no/v2/create-test-token-with-key"
-  }
-}
