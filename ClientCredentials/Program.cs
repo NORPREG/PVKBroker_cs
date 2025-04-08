@@ -10,6 +10,8 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using HelseId.Samples.PVKBroker.Kodeliste;
+using System.Security.Cryptography.X509Certificates;
+
 // using HelseId.Samples.PVKBroker.Encryption;
 
 
@@ -50,7 +52,7 @@ namespace HelseId.Samples.ClientCredentials
             await rootCommand.InvokeAsync(args);
         }
 
-        private static async Task<bool> CallApiWithToken(Machine2MachineClient client)
+        private static async Task<bool> CallApiWithToken(Machine2MachineClientNoDpop client)
         {
             await client.CallApiWithToken();
 
@@ -63,7 +65,15 @@ namespace HelseId.Samples.ClientCredentials
                 Console.WriteLine(patient);
             }
 
+            // Test load PEM file
+            var pem = File.ReadAllText("keys/test_pvk_private_key.pem");
+            var rsa = RSA.Create();
+            rsa.ImportFromPem(pem.ToCharArray());
+
+            Console.WriteLine("RSA: " + rsa.ExportPkcs8PrivateKeyPem());
+
             return ShouldCallAgain();
+
         }
 
         private static bool ShouldCallAgain()

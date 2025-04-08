@@ -1,0 +1,60 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<configuration>
+	<appSettings>
+		<add key="StsFromEnvironment" value="https://helseid-sts.test.nhn.no"/>
+		<add key="SampleApiNameAudience" value="nhn:test-public-samplecode" />
+		<add key="ClientCredentialsScopeForSampleApi" value="/client-credentials" />
+		<add key="AuthorizationCodeScopeForSampleApi" value="/authorization-code" />
+		<add key="SampleTokenExchangeApiAudience" value="nhn:test-public-samplecode-for-token-exchange" />
+		<add key="TokenExchangeApiScope" value="/token-exhange-endpoint" />
+		<add key="SampleApiForResourceIndicators1Audience" value="nhn:test-public-sample-api-1" />
+		<add key="SampleApiForResourceIndicators2Audience" value="nhn:test-public-sample-api-2" />
+		<add key="SampleApiForResourceIndicators1Scope" value="/some-scope" />
+		<add key="SampleApiForResourceIndicators2Scope" value="/some-scope" />
+		<add key="HelseIdSecurityLevelClaim" value="helseid://claims/identity/security_level" />
+		<add key="GeneralHelseIdScopes" value="helseid://scopes/identity/pid helseid://scopes/identity/pid_pseudonym helseid://scopes/identity/assurance_level helseid://scopes/hpr/hpr_number helseid://scopes/identity/network helseid://scopes/identity/security_level" />
+	</appSettings>
+
+	<apiSettings>
+		<add key="SampleApiPort" value="5081" />
+		<add key="SampleApiForResourceIndicators1Port" value="5082" />
+		<add key="SampleApiForResourceIndicators2Port" value="5083" />
+		<add key="SampleApiForTokenExchangePort" value="5092" />
+		<add key="ApiAccessWebServerPort" value="5151" />
+		<add key="TestTokenProxyServerPort" value="5152" />
+		
+		<add key="AuthCodeClientResource" value="user-login-clients/greetings" />
+		<add key="TokenExchangeResource" value="token-exchange-clients/greetings" />
+		<add key="ResourceIndicatorsResource1" value="resource-indicator-client-1/greetings" />
+		<add key="ResourceIndicatorsResource2" value="resource-indicator-client-2/greetings" />
+		<add key="SampleApiMachineClientResource" value="machine-client/greetings" />
+
+		<add key="TestTokenProxyResource" value="test-token" />
+		
+	</apiSettings>
+
+	<orgSettings>
+		<add key="GranfjelldalKommuneOrganizationNumber" value="999977774" />
+		<add key="GranfjelldalKommuneOrganizationName" value="Granfjelldal kommune" />
+		
+		<add key="GranfjelldalKommuneChildOrganizationNumber1" value="999977776" />
+		<add key="GranfjelldalKommuneChildOrganizationName1" value="Granfjelldal kommune bo- og omsorgssenter" />
+		
+		<add key="GranfjelldalKommuneChildOrganizationNumber2" value="999977775" />
+		<add key="GranfjelldalKommuneChildOrganizationName2" value="Granfjelldal kommune legekontor" />
+
+		<add key="SupplierOrganizationNumber" value="313745392" />
+		<add key="SupplierOrganizationName" value="ACME EPJ" />
+
+		<add key="HansensLegekontorOrganizationNumber" value="313325016" />
+		<add key="HansensLegekontorOrganizationName" value="Hansens Legekontor AS" />
+
+		<add key="FlaksvaagoeyKommuneOrganizationNumber" value="312232324" />
+		<add key="FlaksvaagoeyKommuneOrganizationName" value="Flaksvågøy kommune" </add>
+
+		<add key="FlaksvaagoeyKommuneChildOrganizationNumber" value="312232326" />
+		<add key="FlaksvaagoeyKommuneChildOrganizationName" value="Flaksvågøy kommune bo- og omsorgssenter" />
+	</orgSettings>
+		
+</configuration>
+

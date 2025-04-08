@@ -21,7 +21,7 @@ public class ClientConfigurator
     /// Sets up and configures the Machine2MachineClient that will be used to call HelseID.
     /// This code uses static configuration from the public Configuration folder (above this project in the file hierarchy).
     /// </summary>
-    public Machine2MachineClient ConfigureClient(
+    public Machine2MachineClientNoDpop ConfigureClient(
         bool useChildOrganizationNumberOptionValue,
         bool useMultiTenantPatternOptionValue)
     {
@@ -35,7 +35,7 @@ public class ClientConfigurator
         var dPopProofCreator = new DPoPProofCreator(configuration);
         var apiConsumer = new ApiConsumer(dPopProofCreator);
 
-        return new Machine2MachineClient(
+        return new Machine2MachineClientNoDpop(
             apiConsumer,
             tokenRequestBuilder,
             expirationTimeCalculator,
