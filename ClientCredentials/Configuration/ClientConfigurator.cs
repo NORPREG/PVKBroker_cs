@@ -12,6 +12,7 @@ using HelseId.Samples.Common.Models;
 using HelseId.Samples.Common.PayloadClaimsCreators;
 using HelseId.Samples.Common.TokenExpiration;
 using HelseID.Samples.Configuration;
+using HelseId.Samples.Common.Interfaces.JwtTokens;
 
 namespace HelseId.Samples.ClientCredentials.Configuration;
 
@@ -21,21 +22,19 @@ public class ClientConfigurator
     /// Sets up and configures the Machine2MachineClient that will be used to call HelseID.
     /// This code uses static configuration from the public Configuration folder (above this project in the file hierarchy).
     /// </summary>
-    public Machine2MachineClientNoDpop ConfigureClient(
-        bool useChildOrganizationNumberOptionValue,
-        bool useMultiTenantPatternOptionValue)
+    public Machine2MachineClient ConfigureClient()
     {
         var discoveryDocumentGetter = new DiscoveryDocumentGetter(ConfigurationValues.StsUrl);
         var endpointDiscoverer = new HelseIdEndpointsDiscoverer(discoveryDocumentGetter);
-        var configuration = SetUpHelseIdConfiguration(useChildOrganizationNumberOptionValue, useMultiTenantPatternOptionValue);
+        var configuration = SetUpHelseIdConfiguration();
         var tokenRequestBuilder = CreateTokenRequestBuilder(configuration, endpointDiscoverer);
-        var tokenRequestParameters = SetUpTokenRequestParameters(useChildOrganizationNumberOptionValue, useMultiTenantPatternOptionValue);
+        var tokenRequestParameters = SetUpTokenRequestParameters();
         var expirationTimeCalculator = new ExpirationTimeCalculator(new DateTimeService());
-        var payloadClaimsCreator = SetUpPayloadClaimsCreator(useChildOrganizationNumberOptionValue, useMultiTenantPatternOptionValue);
-        var dPopProofCreator = new DPoPProofCreator(configuration);
-        var apiConsumer = new ApiConsumer(dPopProofCreator);
+        var payloadClaimsCreator = SetUpPayloadClaimsCreator();
+        var dPoPProofCreator = new DPoPProofCreator(configuration);
+        var apiConsumer = new ApiConsumer(dPoPProofCreator); // added in Common
 
-        return new Machine2MachineClientNoDpop(
+        return new Machine2MachineClient(
             apiConsumer,
             tokenRequestBuilder,
             expirationTimeCalculator,
@@ -62,74 +61,32 @@ public class ClientConfigurator
         return new TokenRequestBuilder(clientAssertionsBuilder, endpointsDiscoverer, configuration, dPopProofCreator);
     }
 
-    private static HelseIdConfiguration SetUpHelseIdConfiguration(bool useChildOrganizationNumberOptionValue, bool useMultiTenantPatternOptionValue)
+    private static HelseIdConfiguration SetUpHelseIdConfiguration()
     {
         var result = HelseIdSamplesConfiguration.ClientCredentialsClient;
-
-        if (useMultiTenantPatternOptionValue)
-        {
-            // This is done when the '--use-multi-tenant-pattern' option is used on the command line:
-            result = HelseIdSamplesConfiguration.ClientCredentialsSampleForMultiTenantClient;
-        }
-        else if (useChildOrganizationNumberOptionValue)
-        {
-            // This is done when the '--use-child-org-number' option is used on the command line:
-            result = HelseIdSamplesConfiguration.ClientCredentialsWithChildOrgNumberClient;
-        }
 
         return result;
     }
 
-    private static IPayloadClaimsCreatorForClientAssertion SetUpPayloadClaimsCreator(bool useChildOrganizationNumberOptionValue, bool useMultiTenantPatternOptionValue)
+    private static IPayloadClaimsCreatorForClientAssertion SetUpPayloadClaimsCreator()
     {
         var tokenRequestPayloadClaimsCreator = new ClientAssertionPayloadClaimsCreator(new DateTimeService());
-
-        if (useMultiTenantPatternOptionValue)
-        {
-            // Sets up payload configuration (for the client assertion) for a client that implements a
-            // multi-tenancy pattern.
-            // This is done when the '--use-multi-tenant' option is used on the command line.
-            return new CompositePayloadClaimsCreator([
-                tokenRequestPayloadClaimsCreator,
-                new PayloadClaimsCreatorForMultiTenantClient()
-            ]);
-        }
-
-        if (useChildOrganizationNumberOptionValue)
-        {
-            // Sets up payload configuration (for the client assertion) for a client that requests an underenhet
-            // (child organization) number for the access token.
-            // This is done when the '--use-child-org-number' option is used on the command line.
-            return new CompositePayloadClaimsCreator([
-                tokenRequestPayloadClaimsCreator,
-                new PayloadClaimsCreatorWithChildOrgNumber()
-            ]);
-        }
 
         // Sets up payload configuration (for the client assertion) for a "normal" client
         return tokenRequestPayloadClaimsCreator;
     }
 
-    private static ClientCredentialsTokenRequestParameters SetUpTokenRequestParameters(bool useChildOrganizationNumberOptionValue, bool useMultiTenantPatternOptionValue)
+    private static ClientCredentialsTokenRequestParameters SetUpTokenRequestParameters()
     {
         var result = new ClientCredentialsTokenRequestParameters();
-        if (useChildOrganizationNumberOptionValue)
+        result.PayloadClaimParameters = new PayloadClaimParameters()
         {
-            result.PayloadClaimParameters = new PayloadClaimParameters()
-            {
-                ChildOrganizationNumber = ConfigurationValues.GranfjelldalKommuneChildOrganizationNumber2,
-            };
-        }
-        if (useMultiTenantPatternOptionValue)
-        {
-            result.PayloadClaimParameters = new PayloadClaimParameters()
-            {
-                ParentOrganizationNumber = ConfigurationValues.FlaksvaagoeyKommuneOrganizationNumber,
-                // Optional: we pass on a child organization number for the organization that has
-                // delegated rights to the (multitenancy) supplier
-                ChildOrganizationNumber = ConfigurationValues.FlaksvaagoeyKommuneChildOrganizationNumber,
-            };
-        }
+            // parent = sendingParent (OUS); child = sendingChild (?)
+            ParentOrganizationNumber = ConfigurationValues.OUSOrganizationNumber,
+            // ChildOrganizationNumber = ConfigurationValues.GranfjelldalKommuneChildOrganizationNumber2
+            // put client_assertion_type here?????
+        };
+
         return result;
     }
 }

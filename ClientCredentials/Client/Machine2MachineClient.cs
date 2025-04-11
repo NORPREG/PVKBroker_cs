@@ -5,6 +5,7 @@ using HelseId.Samples.Common.Interfaces.TokenRequests;
 using HelseId.Samples.Common.Models;
 using HelseID.Samples.Configuration;
 using IdentityModel.Client;
+using System.Text;
 
 namespace HelseId.Samples.ClientCredentials.Client;
 
@@ -14,8 +15,8 @@ public class Machine2MachineClient
     private IApiConsumer _apiConsumer;
     private ClientCredentialsTokenRequestParameters _tokenRequestParameters;
     private IExpirationTimeCalculator _expirationTimeCalculator;
-    private DateTime _persistedAccessTokenExpiresAt = DateTime.MinValue;
-    private string _persistedAccessToken = string.Empty;
+    private DateTime _persistedAccessTokenExpiresAt = DateTime.MinValue; // cache this to disk
+    private string _persistedAccessToken = string.Empty; // cache this to disk
     private readonly IPayloadClaimsCreatorForClientAssertion _payloadClaimsCreatorForClientAssertion;
 
     public Machine2MachineClient(
@@ -116,7 +117,8 @@ public class Machine2MachineClient
         {
             Console.WriteLine("Using the access token to call the sample API");
             ApiResponse? response;
-            response = await _apiConsumer.CallApiWithDPoPToken(httpClient, ConfigurationValues.SampleApiUrlForM2M, accessToken);
+            response = await _apiConsumer.CallApiWithDPoPToken(httpClient, ConfigurationValues.PvkApiUrlForM2M, accessToken);
+            // response = await _apiConsumer.CallApiWithDPoPToken(httpClient, ConfigurationValues.SampleApiUrlForM2M, accessToken);
             var notPresent = "<not present>";
             var supplierOrganization = OrganizationStore.GetOrganization(response?.SupplierOrganizationNumber);
             var parentOrganization = OrganizationStore.GetOrganization(response?.ParentOrganizationNumber);
@@ -129,7 +131,7 @@ public class Machine2MachineClient
         }
         catch (HttpRequestException e)
         {
-            Console.WriteLine($"The sample API did not accept the request at address '{ConfigurationValues.SampleApiUrlForM2M}'. (Have you started the sample API application (in the 'SampleAPI' folder)?");
+            Console.WriteLine($"The sample API did not accept the request at address '{ConfigurationValues.PvkApiUrlForM2M}'. (Have you started the sample API application (in the 'SampleAPI' folder)?");
             Console.WriteLine($"Error message: '{e.Message}'");
         }
     }

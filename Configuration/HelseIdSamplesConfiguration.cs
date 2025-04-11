@@ -22,32 +22,40 @@ public class HelseIdSamplesConfiguration : HelseIdConfiguration
     // Configuration for the 'plain' client credentials application
     public static HelseIdSamplesConfiguration ClientCredentialsClient =>
         new(
+            // ConfigurationValues.PvkRsaKey,
             ConfigurationValues.ClientCredentialsSampleRsaPrivateKeyJwk,
             ConfigurationValues.ClientCredentialsSampleClientId,
             ConfigurationValues.ClientCredentialsSampleScope);
 
     // Configuration for the client credentials application with child organization number
+    /*
     public static HelseIdSamplesConfiguration ClientCredentialsWithChildOrgNumberClient =>
         new(
             ConfigurationValues.ClientCredentialsWithChildOrgNumberSamplePrivateKeyJwk,
             ConfigurationValues.ClientCredentialsWithChildOrgNumberSampleClientId,
             ConfigurationValues.ClientCredentialsSampleScope);
+    */
 
     // Configuration for the client credentials application with multi-tenancy
+    /*
     public static HelseIdSamplesConfiguration ClientCredentialsSampleForMultiTenantClient =>
         new(
             ConfigurationValues.ClientCredentialsSampleForMultiTenantPrivateKeyJwk,
             ConfigurationValues.ClientCredentialsSampleForMultiTenantClientId,
             ConfigurationValues.ClientCredentialsSampleScope);
+    */
 
     // The configuration for the ApiAccess project in logon only (no API access) mode
+    /*
     public static HelseIdSamplesConfiguration UserAuthenticationClient =>
         new(
             ConfigurationValues.UserAuthenticationPrivateKeyJwk,
             ConfigurationValues.UserAuthenticationClientId,
             ConfigurationValues.UserAuthenticationClientScope);
+    */
 
     // The configuration for the ApiAccess project (accessing the sample API)
+    /*
     public static HelseIdSamplesConfiguration ApiAccess =>
         new(
             ConfigurationValues.ApiAccessSampleRsaPrivateKeyJwk,
@@ -60,23 +68,29 @@ public class HelseIdSamplesConfiguration : HelseIdConfiguration
             ConfigurationValues.ApiAccessWithRequestObjectSampleRsaPrivateKeyJwk,
             ConfigurationValues.ApiAccessSampleClientIdWithRequestObject,
             ConfigurationValues.ApiAccessWithRequestObjectSampleScope);
+    */
 
     // Configuration for the ApiAccess project with multi-tenancy
+    /*
     public static HelseIdSamplesConfiguration ApiAccessForMultiTenantClient =>
         new(
             ConfigurationValues.ApiAccessSampleForMultiTenantPrivateKeyJwk,
             ConfigurationValues.ApiAccessSampleClientIdForMultiTenantApp,
             ConfigurationValues.ApiAccessSampleScopeForMultiTenantApp);
+    */
 
     // The configuration for the ApiAccess project (accessing the token exchange client)
+    /*
     public static HelseIdSamplesConfiguration ApiAccessWithTokenExchange =>
         new(
             ConfigurationValues.TokenExchangeSubjectRsaPrivateKeyJwk,
             ConfigurationValues.TokenExchangeSubjectClientId,
             ConfigurationValues.TokenExchangeSubjectClientScope);
+    */
 
     // The configuration for the the ApiAccess project with resource indicators
     // We add the audiences for the two APIs that this project will use as resource indicators
+    /*
     public static HelseIdSamplesConfiguration ResourceIndicatorsClient =>
         new(
             ConfigurationValues.ApiAccessResourceIndicatorRsaPrivateKeyJwk,
@@ -87,11 +101,13 @@ public class HelseIdSamplesConfiguration : HelseIdConfiguration
                 ConfigurationValues.SampleApiForResourceIndicators1Audience,
                 ConfigurationValues.SampleApiForResourceIndicators2Audience,
             });
-
+    */
+    /*
     // The configuration for the SampleApiForTokenExchange project (used for accessing the SampleApi with the token exchange grant)
     public static HelseIdSamplesConfiguration TokenExchangeClient =>
         new(
             ConfigurationValues.TokenExchangeActorRsaPrivateKeyJwk,
             ConfigurationValues.TokenExchangeActorClientId,
             ConfigurationValues.TokenExchangeActorClientScope);
+    */
 }

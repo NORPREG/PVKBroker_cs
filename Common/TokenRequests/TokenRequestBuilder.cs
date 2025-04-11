@@ -83,6 +83,7 @@ public class TokenRequestBuilder : ITokenRequestBuilder
             SubjectToken = tokenRequestParameters.SubjectToken,
             DPoPProofToken = _dPoPProofCreator.CreateDPoPProof(tokenEndpoint, "POST", dPoPNonce: dPoPNonce),
         };
+
         return request;
     }
 

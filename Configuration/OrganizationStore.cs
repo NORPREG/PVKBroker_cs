@@ -7,58 +7,9 @@ public static class OrganizationStore
         new Organization
         {
             Id = 1,
-            OrgNoParent = ConfigurationValues.GranfjelldalKommuneOrganizationNumber,
-            ParentName = ConfigurationValues.GranfjelldalKommuneOrganizationName
-        },
-        new Organization
-        {
-            Id = 2,
-            OrgNoParent = ConfigurationValues.GranfjelldalKommuneOrganizationNumber,
-            ParentName = ConfigurationValues.GranfjelldalKommuneOrganizationName,
-            OrgNoChild = ConfigurationValues.GranfjelldalKommuneChildOrganizationNumber1,
-            ChildName = ConfigurationValues.GranfjelldalKommuneChildOrganizationName1        },
-        new Organization
-        {
-            Id = 3,
-            OrgNoParent = ConfigurationValues.GranfjelldalKommuneOrganizationNumber,
-            ParentName = ConfigurationValues.GranfjelldalKommuneOrganizationName,
-            OrgNoChild = ConfigurationValues.GranfjelldalKommuneChildOrganizationNumber2,
-            ChildName = ConfigurationValues.GranfjelldalKommuneChildOrganizationName2
-        },
-        new Organization
-        {
-            Id = 4,
-            OrgNoParent = ConfigurationValues.SupplierOrganizationNumber,
-            ParentName = ConfigurationValues.SupplierOrganizationName
-        },
-        new Organization
-        {
-            Id = 5,
-            OrgNoParent = ConfigurationValues.HansensLegekontorOrganizationNumber,
-            ParentName = ConfigurationValues.HansensLegekontorOrganizationName
-        },
-        new Organization
-        {
-            Id = 6,
-            OrgNoParent = ConfigurationValues.FlaksvaagoeyKommuneOrganizationNumber,
-            ParentName = ConfigurationValues.FlaksvaagoeyKommuneOrganizationName
-        },
-        new Organization
-        {
-            Id = 7,
-            OrgNoParent = ConfigurationValues.FlaksvaagoeyKommuneOrganizationNumber,
-            ParentName = ConfigurationValues.FlaksvaagoeyKommuneOrganizationName,
-            OrgNoChild = ConfigurationValues.FlaksvaagoeyKommuneChildOrganizationNumber,
-            ChildName = ConfigurationValues.FlaksvaagoeyKommuneChildOrganizationName
-        },
-        new Organization
-        {
-            Id = 8,
-            OrgNoParent = ConfigurationValues.FlaksvaagoeyKommuneOrganizationNumber,
-            ParentName = ConfigurationValues.FlaksvaagoeyKommuneOrganizationName,
-            OrgNoChild = ConfigurationValues.FlaksvaagoeyKommuneChildOrganizationNumber,
-            ChildName = ConfigurationValues.FlaksvaagoeyKommuneChildOrganizationName
-        },
+            OrgNoParent = ConfigurationValues.OUSOrganizationNumber,
+            ParentName = ConfigurationValues.OUSOrganizationName
+        }
     };
 
     public static Organization? GetOrganization(int id)

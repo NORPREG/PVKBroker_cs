@@ -1,10 +1,26 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <TargetFramework>net9.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
   </PropertyGroup>
+
+	<!--
+  <ItemGroup>
+    <Compile Remove="OrganizationStore.cs" />
+  </ItemGroup>
+
+	
+  <ItemGroup>
+    <Compile Remove="ConfigurationValuesNew.cs" />
+  </ItemGroup>
+  -->
+
+  <ItemGroup>
+    <None Include="ConfigurationValuesNew.cs" />
+    <None Include="OrganizationStore.cs" />
+  </ItemGroup>
 
 	<ItemGroup>
 		<ProjectReference Include="..\Common\HelseId.Samples.Common.csproj" />
