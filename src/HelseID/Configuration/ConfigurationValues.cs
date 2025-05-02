@@ -3,20 +3,25 @@ using System.Runtime.InteropServices;
 using System.Security.Cryptography;
 using SecurityKey = HelseId.Samples.Common.Configuration.SecurityKey;
 
-namespace HelseID.Configuration;
+namespace HelseId.Configuration;
 
 public static class ConfigurationValues
 {
     // The URL for HelseID (may be set as an environment variable)
     public static string StsUrl { get;  } = "https://helseid-sts.test.nhn.no";
     public static string StsPort = "443";
+    public const string JwksUri = $"{StsUrl}/.well-known/openid-configuration";
 
     public const string ClientCredentialsResource = "connect/token";
+
+    public const string ClientAmr = "private_key_jwt"
 
     // Audiences and scopes for using the PVK test token exchange
     public const string ApiForPvkAudience = "nhn:helsenorge.eksternapi";
     public const string ApiForPvkReadScope = $"{ApiForPvkAudience}/personverninnstilling_read";
     public const string ApiForPvkWriteScope = $"{ApiForPvkAudience}/personverninnstilling_write";
+
+    public const bool ClientCredentialsUseDpop = false;
 
     // HelseID scopes defined at https://helseid.atlassian.net/wiki/spaces/HELSEID/pages/5603417/Scopes
     private const string GeneralHelseIdScopes = "helseid://scopes/identity/pid helseid://scopes/identity/pid_pseudonym helseid://scopes/identity/assurance_level helseid://scopes/hpr/hpr_number helseid://scopes/identity/network helseid://scopes/identity/security_level";

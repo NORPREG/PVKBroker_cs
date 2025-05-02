@@ -1,4 +1,4 @@
-namespace HelseID.Configuration;
+namespace HelseId.Configuration;
 
 public static class OrganizationStore
 {

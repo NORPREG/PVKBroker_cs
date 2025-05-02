@@ -1,9 +1,9 @@
-using HelseId.Samples.Common.Interfaces.ApiConsumers;
+// using HelseId.Samples.Common.Interfaces.ApiConsumers;
 using HelseId.Samples.Common.Interfaces.PayloadClaimsCreators;
 using HelseId.Samples.Common.Interfaces.TokenExpiration;
 using HelseId.Samples.Common.Interfaces.TokenRequests;
 using HelseId.Samples.Common.Models;
-using HelseID.Configuration;
+using HelseId.Configuration;
 using IdentityModel.Client;
 using System.Text;
 
@@ -12,7 +12,7 @@ namespace HelseId.ClientCredentials.Client;
 public class Machine2MachineClient
 {
     private ITokenRequestBuilder _tokenRequestBuilder;
-    private IApiConsumer _apiConsumer;
+    // private IApiConsumer _apiConsumer;
     private ClientCredentialsTokenRequestParameters _tokenRequestParameters;
     private IExpirationTimeCalculator _expirationTimeCalculator;
     private DateTime _persistedAccessTokenExpiresAt = DateTime.MinValue; // cache this to disk
@@ -20,20 +20,22 @@ public class Machine2MachineClient
     private readonly IPayloadClaimsCreatorForClientAssertion _payloadClaimsCreatorForClientAssertion;
 
     public Machine2MachineClient(
-        IApiConsumer apiConsumer,
+        // IApiConsumer apiConsumer,
         ITokenRequestBuilder tokenRequestBuilder,
         IExpirationTimeCalculator expirationTimeCalculator,
         IPayloadClaimsCreatorForClientAssertion payloadClaimsCreatorForClientAssertion,
-        ClientCredentialsTokenRequestParameters tokenRequestParameters)
+        ClientCredentialsTokenRequestParameters tokenRequestParameters,
+        bool clientCredentialsUseDpop)
     {
         _tokenRequestBuilder = tokenRequestBuilder;
-        _apiConsumer = apiConsumer;
+        // _apiConsumer = apiConsumer; // don't need that here
         // The client info retriever can be used for debugging purposes.
         // When activated, it accesses the client info endpoint on the HelseID service,
         // which returns info about the client that was used to get an access token.
         _expirationTimeCalculator = expirationTimeCalculator;
         _payloadClaimsCreatorForClientAssertion = payloadClaimsCreatorForClientAssertion;
         _tokenRequestParameters = tokenRequestParameters;
+        _clientCredentialsUseDpop = clientCredentialsUseDpop;
     }
 
     public string GetAccessToken()
@@ -41,6 +43,7 @@ public class Machine2MachineClient
         return _persistedAccessToken;
     }
 
+    /*
     public async Task CallApiWithToken()
     {
         using var httpClient = new HttpClient();
@@ -51,6 +54,7 @@ public class Machine2MachineClient
         // Consume the API
         await CallApi(httpClient, accessToken);
     }
+    */
 
     private async Task<string> GetAccessToken(HttpClient httpClient)
     {
@@ -60,14 +64,17 @@ public class Machine2MachineClient
             _persistedAccessTokenExpiresAt = _expirationTimeCalculator.CalculateTokenExpirationTimeUtc(tokenResponse.ExpiresIn);
             _persistedAccessToken = tokenResponse.AccessToken!;
 
+            /*
             Console.WriteLine("Inspecting Reponse...");
             Console.WriteLine("Token_type: " + tokenResponse.TokenType);
             Console.WriteLine("Expires_in: " + tokenResponse.ExpiresIn);
             Console.WriteLine("Refresh_token: " + tokenResponse.RefreshToken);
             Console.WriteLine("Complete token response: " + tokenResponse.Json.ToString());
+            */
         }
         else
         {
+            // Push to logger
             Console.WriteLine("The access token has not yet expired, no call was made to HelseID for a new token.");
         }
         return _persistedAccessToken;
@@ -92,14 +99,24 @@ public class Machine2MachineClient
     private async Task<TokenResponse> RequestClientCredentialsTokenAsync(HttpClient httpClient)
     {
         // The request to HelseID is created:
-        var request = await _tokenRequestBuilder.CreateClientCredentialsTokenRequest(_payloadClaimsCreatorForClientAssertion, _tokenRequestParameters, null);
-        // var request = await _tokenRequestBuilder.CreateClientCredentialsBearerTokenRequest(_payloadClaimsCreatorForClientAssertion, _tokenRequestParameters);
 
+        if (clientCredentialsUseDpop) {
+            var request = await _tokenRequestBuilder.CreateClientCredentialsTokenRequest(
+                _payloadClaimsCreatorForClientAssertion,
+                _tokenRequestParameters,
+                null);
+        }
+        else {
+            var request = await _tokenRequestBuilder.CreateClientCredentialsBearerTokenRequest(
+                _payloadClaimsCreatorForClientAssertion, 
+                _tokenRequestParameters);
+        }
+        
         InspectRequest(request);
 
         var tokenResponse = await httpClient.RequestClientCredentialsTokenAsync(request);
 
-        if (tokenResponse.IsError && tokenResponse.Error == "use_dpop_nonce" && !string.IsNullOrEmpty(tokenResponse.DPoPNonce))
+        if (clientCredentialsUseDpop && tokenResponse.IsError && tokenResponse.Error == "use_dpop_nonce" && !string.IsNullOrEmpty(tokenResponse.DPoPNonce))
         {
             request = await _tokenRequestBuilder.CreateClientCredentialsTokenRequest(_payloadClaimsCreatorForClientAssertion, _tokenRequestParameters, tokenResponse.DPoPNonce);
             tokenResponse = await httpClient.RequestClientCredentialsTokenAsync(request);
@@ -135,6 +152,7 @@ public class Machine2MachineClient
         Console.WriteLine("------");
     }
 
+    /*
     private async Task CallApi(HttpClient httpClient, string accessToken)
     {
         try
@@ -158,4 +176,5 @@ public class Machine2MachineClient
             Console.WriteLine($"Error message: '{e.Message}'");
         }
     }
+    */
 }

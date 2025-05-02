@@ -4,7 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Text;
 
-namespace HelseId.Samples.PVKBroker.Encryption
+namespace PVKBroker.Encryption
 {
     class Encryption
     {

@@ -9,7 +9,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HelseId.Common", "src\Helse
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HelseId.Configuration", "src\HelseID\Configuration\HelseId.Configuration.csproj", "{36266DA1-AB27-4D38-B14C-4B3742321636}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PvkApi", "src\PvkApi\PvkApi.csproj", "{5F870B40-BC71-09ED-3F74-5FCF720A5E8E}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Pvk", "src\PvkApi\Pvk.csproj", "{5F870B40-BC71-09ED-3F74-5FCF720A5E8E}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

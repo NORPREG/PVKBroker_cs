@@ -15,7 +15,6 @@ using Microsoft.IdentityModel.Tokens;
 // using HelseId.Samples.PVKBroker.Encryption;
 
 namespace HelseId.ClientCredentials
-// This file is used for bootstrapping the example. Nothing of interest here.
 {
     static class Program
     {
@@ -27,8 +26,7 @@ namespace HelseId.ClientCredentials
             {
                 var clientConfigurator = new ClientConfigurator();
                 var client = clientConfigurator.ConfigureClient();
-
-                await CallApiWithToken(client);
+                // await CallApiWithToken(client);
             });
 
             await rootCommand.InvokeAsync(args);

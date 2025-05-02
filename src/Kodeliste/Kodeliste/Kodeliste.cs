@@ -2,10 +2,9 @@
 using System.Collections.Generic;
 using MySql.Data;
 using MySql.Data.MySqlClient;
-using HelseId.Samples.PVKBroker;
+using PVKBroker;
 
-namespace HelseId.Samples.PVKBroker.Kodeliste
-// This file is used for bootstrapping the example. Nothing of interest here.
+namespace PVKBroker.Kodeliste
 {
     public class DBConnection
     {

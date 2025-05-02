@@ -11,7 +11,7 @@ using HelseId.Samples.Common.JwtTokens;
 using HelseId.Samples.Common.Models;
 using HelseId.Samples.Common.PayloadClaimsCreators;
 using HelseId.Samples.Common.TokenExpiration;
-using HelseID.Configuration;
+using HelseId.Configuration;
 using HelseId.Samples.Common.Interfaces.JwtTokens;
 
 namespace HelseId.ClientCredentials.Configuration;
@@ -22,24 +22,29 @@ public class ClientConfigurator
     /// Sets up and configures the Machine2MachineClient that will be used to call HelseID.
     /// This code uses static configuration from the public Configuration folder (above this project in the file hierarchy).
     /// </summary>
+
+    public var _configuration = SetUpHelseIdConfiguration();
+
     public Machine2MachineClient ConfigureClient()
     {
         var discoveryDocumentGetter = new DiscoveryDocumentGetter(ConfigurationValues.StsUrl);
         var endpointDiscoverer = new HelseIdEndpointsDiscoverer(discoveryDocumentGetter);
         var configuration = SetUpHelseIdConfiguration();
-        var tokenRequestBuilder = CreateTokenRequestBuilder(configuration, endpointDiscoverer);
+        var tokenRequestBuilder = CreateTokenRequestBuilder(_configuration, endpointDiscoverer);
         var tokenRequestParameters = SetUpTokenRequestParameters();
         var expirationTimeCalculator = new ExpirationTimeCalculator(new DateTimeService());
         var payloadClaimsCreator = SetUpPayloadClaimsCreator();
-        var dPoPProofCreator = new DPoPProofCreator(configuration);
-        var apiConsumer = new ApiConsumer(dPoPProofCreator); // added in Common
+        var dPoPProofCreator = new DPoPProofCreator(_configuration);
+        bool clientCredentialsUseDpop = configuration.ClientCredentialsUseDpop;
+//        var apiConsumer = new ApiConsumer(dPoPProofCreator); // added in Common
 
         return new Machine2MachineClient(
-            apiConsumer,
+//            apiConsumer,
             tokenRequestBuilder,
             expirationTimeCalculator,
             payloadClaimsCreator,
-            tokenRequestParameters);
+            tokenRequestParameters,
+            clientCredentialsUseDpop);
     }
 
     private static ITokenRequestBuilder CreateTokenRequestBuilder(HelseIdConfiguration configuration, IHelseIdEndpointsDiscoverer endpointsDiscoverer)
