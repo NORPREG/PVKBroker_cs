@@ -39,6 +39,9 @@ public class PvkCaller
 
         request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
         
+
+        // need new payload to adhere to v2.....
+        // https://helsenorge.atlassian.net/wiki/spaces/HELSENORGE/pages/2328952849/Hente+informasjon+fra+PVK+om+innbyggers+personverninnstillinger
         var payload = new
         {
             definisjonGuid = "2c11f0ca-7270-43f1-a473-bac325feb3f6",

@@ -1,5 +1,8 @@
 namespace Pvk.ApiCaller;
 
+// need new data model to adhere to v2...
+// https://helsenorge.atlassian.net/wiki/spaces/HELSENORGE/pages/2328952849/Hente+informasjon+fra+PVK+om+innbyggers+personverninnstillinger
+
 public class ApiReponseHentInnbyggere
 {
 	public string definisjonGuid { get; set; }
