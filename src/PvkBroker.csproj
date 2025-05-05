@@ -6,10 +6,10 @@
 	</PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="HelseID\ClientCredentials\HelseId.ClientCredentials.csproj" />
-    <ProjectReference Include="KodelisteApi\KodelisteApi.csproj" />
-    <ProjectReference Include="PvkApi\PvkApi.csproj" />
-    <ProjectReference Include="RedcapApi\RedcapApi.csproj" />
+    <ProjectReference Include="src\HelseID\ClientCredentials\HelseId.ClientCredentials.csproj" />
+    <ProjectReference Include="src\Kodeliste\Kodeliste.csproj" />
+    <ProjectReference Include="src\Pvk\Pvk.csproj" />
+    <ProjectReference Include="src\Redcap\Redcap.csproj" />
   </ItemGroup>
 
 	<ItemGroup>

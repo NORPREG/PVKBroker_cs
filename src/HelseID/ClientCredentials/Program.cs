@@ -17,7 +17,7 @@ using Microsoft.IdentityModel.Tokens;
 namespace HelseId.ClientCredentials
 {
     static class Program
-    {
+     {
         static async Task Main(string[] args)
         {
             var rootCommand = new RootCommand("A client credentials usage sample");

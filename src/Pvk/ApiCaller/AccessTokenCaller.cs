@@ -14,9 +14,8 @@ namespace PvkBroker.ApiCaller;
 
 public class AccessTokenCaller
 {
-
     private var _clientConfigurator = new ClientConfigurator();
-    private var _client = clientConfigurator.ConfigureClient();
+    private var _client = _clientConfigurator.ConfigureClient();
 
     public AccessTokenCaller() {}
 

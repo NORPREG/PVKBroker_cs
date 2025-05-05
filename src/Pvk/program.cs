@@ -23,7 +23,7 @@ namespace PvkBroker
                 Console.WriteLine("CLAIM TYPE: " + claim.Type + "; CLAIM VALUE: " + claim.Value);
             }
 
-            string result = await _pvkCaller.CallApiHentInnbyggereAktivePiForDefinisjon();
+            string result = await _pvkCaller.CallApiHentInnbyggere(accessToken);
             Console.WriteLine("PVK API call result:", result);
         }
     }

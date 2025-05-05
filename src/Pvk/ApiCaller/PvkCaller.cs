@@ -3,64 +3,72 @@ using System.Text.Json;
 using HelseId.Common.JwtTokens;
 using HelseId.Common.Configuration;
 using HelseId.ClientCredentials.Client;
+using HelseId.Configuration;
+using HelseId.Samples.Common.Endpoints;
 
 namespace PvkBroker.ApiCaller;
 
 public class PvkCaller
 {
-    /*
-    // For use when PVK API supports DPoP
-    private readonly IDPoPProofCreator? _idPoPProofCreator;
-    public ApiConsumer(IDPoPProofCreator idPoPProofCreator)
-    {
-        _idPoPProofCreator = idPoPProofCreator;
-    }
+     var _configuration = SetUpHelseIdConfiguration();
 
-    ref: HelseId.Common.ApiConsumers
+     public PvkCaller() {
+          _idPoPProofCreator = null;
+     }
 
-    */
+     public PvkCaller(IDPoPProofCreator idPoPProofCreator)
+     {
+          _idPoPProofCreator = idPoPProofCreator;
+     }
 
-    private readonly string _baseurl = "https://eksternapi-helsenett.hn2.test.nhn.no";
-    private readonly string _url = $"{_baseurl}/HentInnbyggereAktivePiForDefinisjon/v2";
+     public HttpRequestMessage GetBaseRequestParameters(string accessToken, string url)
+     {
+          using var httpClient = new HttpClient();
+          var request = new HttpRequestMessage(HttpMethod.Get, url);
 
-    public PvkCaller() {}
+          if (_idPoPProofCreator)
+          {
+               var dPopProof = _idPoPProofCreator.CreateDPoPProof(_url, "GET", accessToken: accessToken);
+               request.SetDPoPToken(accessToken, dPopProof);
+          }
 
-    public async Task<HttpResponseMessage?> CallApiHentInnbyggereAktivePiForDefinisjon(string accessToken)
-    {
-        using var httpClient = new HttpClient();
+          else
+          {
+               request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
+          }
 
-        var request = new HttpRequestMessage(HttpMethod.Get, _url);
+          return request
+     }
 
-        // Build support DPoP when the PVK API supports this
-        // Set useDPoP = true in the config in that case to get a dpop-enabled accessToken
+     public async Task<HttpResponseMessage?> CallApiHentInnbyggere(string accessToken, string pagingReference = 0)
+     {
+          var url = _configuration.PvkBaseUrl + _configuration.PvkHentInnbyggereUrl;
 
-        // var dPopProof = _idPoPProofCreator.CreateDPoPProof(apiUrl, "GET", accessToken: accessToken);
-        // request.SetDPoPToken(accessToken, dPopProof);
+          var request = GetBaseRequestParameters(accessToken, url);
 
-        request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
-        
+          // need new payload to adhere to v2.....
+          // https://helsenorge.atlassian.net/wiki/spaces/HELSENORGE/pages/
+          // 2328952849/Hente+informasjon+fra+PVK+om+innbyggers+personverninnstillinger
 
-        // need new payload to adhere to v2.....
-        // https://helsenorge.atlassian.net/wiki/spaces/HELSENORGE/pages/2328952849/Hente+informasjon+fra+PVK+om+innbyggers+personverninnstillinger
-        var payload = new
-        {
-            definisjonGuid = "2c11f0ca-7270-43f1-a473-bac325feb3f6",
-            partKode = "prostraa",
-            pagingReference = 0
-        };
+          var payload = new
+          {
+               definisjonGuid = _configuration.PvkApiClientId,
+               partKode = _configuration.PvkPartKode,
+               pagingReference = pagingReference
+          };
 
-        request.Content = new StringContent(JsonSerializer.Serialize(payload));
-        request.Content.Headers.ContentType = new MediaTypeHeaderValue("application/json");
+          request.Content = new StringContent(JsonSerializer.Serialize(payload));
+          request.Content.Headers.ContentType = new MediaTypeHeaderValue("application/json");
 
-        var response = await httpClient.SendAsync(request);
-        response.EnsureSuccessStatusCode();
-        var responseBody = await response.Content.ReadAsStringAsync();
+          var response = await httpClient.SendAsync(request);
+          response.EnsureSuccessStatusCode();
+          var responseBody = await response.Content.ReadAsStringAsync();
 
-        return JsonSerializer.Deserialize<ApiReponseHentInnbyggere>(
-            responseBody,
-            new JsonSerializerOptions
-            {
-                PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
-            });
-    }
+          return JsonSerializer.Deserialize<ApiReponseHentInnbyggere>(
+               responseBody,
+               new JsonSerializerOptions
+               {
+                    PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+               });
+     }
 }
