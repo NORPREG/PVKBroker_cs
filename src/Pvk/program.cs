@@ -14,7 +14,7 @@ namespace PvkBroker
         static async Task Program()
         {
             string accessToken = await _accessTokenCaller.GetAccessToken();
-            Console.WriteLine("Received access token:"; accessToken);
+            Console.WriteLine("Received access token:", accessToken);
 
             ClaimsPrincipal principal = await _accessTokenCaller.ValidateAccessTokenAsync(accessToken);
             Console.WriteLine("Access token validation result:");

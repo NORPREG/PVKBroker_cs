@@ -22,8 +22,16 @@
     <None Include="OrganizationStore.cs" />
   </ItemGroup>
 
+	<!--
 	<ItemGroup>
 		<ProjectReference Include="..\Common\HelseId.Common.csproj" />
+	</ItemGroup>
+	-->
+
+	<ItemGroup>
+		<Reference Include="HelseId.Common">
+			<HintPath>..\..\dll\HelseId.Samples.Common.dll</HintPath>
+		</Reference>
 	</ItemGroup>
 
   <ItemGroup>
@@ -37,13 +45,7 @@
     <PackageReference Include="Microsoft.IdentityModel.JsonWebTokens" Version="8.3.0" />
     <PackageReference Include="Microsoft.IdentityModel.Logging" Version="8.3.0" />
   </ItemGroup>
-	
-	<!--
-  <ItemGroup>
-    <Reference Include="HelseId.Samples.Common">
-      <HintPath>..\dll\HelseId.Samples.Common.dll</HintPath>
-    </Reference>
-  </ItemGroup>
-  -->
-	
+
+
+
 </Project>

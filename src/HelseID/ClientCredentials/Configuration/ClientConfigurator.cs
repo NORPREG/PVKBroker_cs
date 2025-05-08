@@ -1,20 +1,24 @@
-using HelseId.Samples.Common.TokenRequests;
+// FROM DLL
+// using HelseId.Samples.Common.TokenRequests;
+using PvkBroker.HelseId.CommonExtended.TokenRequests;   
 using HelseId.Samples.Common.ApiConsumers;
-using HelseId.ClientCredentials.Client;
 using HelseId.Samples.Common.ClientAssertions;
 using HelseId.Samples.Common.Configuration;
 using HelseId.Samples.Common.Endpoints;
 using HelseId.Samples.Common.Interfaces.Endpoints;
 using HelseId.Samples.Common.Interfaces.PayloadClaimsCreators;
-using HelseId.Samples.Common.Interfaces.TokenRequests;
+// using HelseId.Samples.Common.Interfaces.TokenRequests;
+using PvkBroker.HelseId.CommonExtended.Interfaces.TokenRequests;
 using HelseId.Samples.Common.JwtTokens;
 using HelseId.Samples.Common.Models;
 using HelseId.Samples.Common.PayloadClaimsCreators;
 using HelseId.Samples.Common.TokenExpiration;
-using HelseId.Configuration;
 using HelseId.Samples.Common.Interfaces.JwtTokens;
 
-namespace HelseId.ClientCredentials.Configuration;
+using PvkBroker.Configuration;
+using PvkBroker.HelseId.ClientCredentials.Client;
+
+namespace PvkBroker.HelseId.ClientCredentials.Configuration;
 
 public class ClientConfigurator
 {
@@ -23,23 +27,19 @@ public class ClientConfigurator
     /// This code uses static configuration from the public Configuration folder (above this project in the file hierarchy).
     /// </summary>
 
-    public var _configuration = SetUpHelseIdConfiguration();
-
     public Machine2MachineClient ConfigureClient()
     {
         var discoveryDocumentGetter = new DiscoveryDocumentGetter(ConfigurationValues.StsUrl);
         var endpointDiscoverer = new HelseIdEndpointsDiscoverer(discoveryDocumentGetter);
         var configuration = SetUpHelseIdConfiguration();
-        var tokenRequestBuilder = CreateTokenRequestBuilder(_configuration, endpointDiscoverer);
+        var extendedTokenRequestBuilder = CreateTokenRequestBuilder(configuration, endpointDiscoverer);
         var tokenRequestParameters = SetUpTokenRequestParameters();
         var expirationTimeCalculator = new ExpirationTimeCalculator(new DateTimeService());
         var payloadClaimsCreator = SetUpPayloadClaimsCreator();
-        var dPoPProofCreator = new DPoPProofCreator(_configuration);
-        bool clientCredentialsUseDpop = configuration.ClientCredentialsUseDpop;
-//        var apiConsumer = new ApiConsumer(dPoPProofCreator); // added in Common
+        var dPoPProofCreator = new DPoPProofCreator(configuration);
+        bool clientCredentialsUseDpop = ConfigurationValues.ClientCredentialsUseDpop;
 
         return new Machine2MachineClient(
-//            apiConsumer,
             tokenRequestBuilder,
             expirationTimeCalculator,
             payloadClaimsCreator,
@@ -86,10 +86,7 @@ public class ClientConfigurator
         var result = new ClientCredentialsTokenRequestParameters();
         result.PayloadClaimParameters = new PayloadClaimParameters()
         {
-            // parent = sendingParent (OUS); child = sendingChild (?)
-            ParentOrganizationNumber = ConfigurationValues.OUSOrganizationNumber,
-            // ChildOrganizationNumber = ConfigurationValues.GranfjelldalKommuneChildOrganizationNumber2
-            // put client_assertion_type here?????
+            ParentOrganizationNumber = ConfigurationValues.OUSOrganizationNumber
         };
 
         return result;

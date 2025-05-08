@@ -1,29 +1,26 @@
 using HelseId.Samples.Common.Interfaces.PayloadClaimsCreators;
 using HelseId.Samples.Common.Models;
+
 using IdentityModel.Client;
 
-namespace HelseId.Samples.Common.Interfaces.TokenRequests;
+namespace PvkBroker.HelseId.CommonExtended.Interfaces.TokenRequests;
 
-public interface ITokenRequestBuilder
+public interface ITokenRequestBuilder : ITokenRequestBuilder
 {
+    Task<ClientCredentialsTokenRequest> CreateClientCredentialsBearerTokenRequest(
+        IPayloadClaimsCreator payloadClaimsCreator,
+        ClientCredentialsTokenRequestParameters tokenRequestParameters);
+
     Task<ClientCredentialsTokenRequest> CreateClientCredentialsTokenRequest(
         IPayloadClaimsCreator payloadClaimsCreator,
         ClientCredentialsTokenRequestParameters tokenRequestParameters,
         string? dPoPNonce);
 
-    /*
-
-    Task<ClientCredentialsTokenRequest> CreateClientCredentialsBearerTokenRequest(
-        IPayloadClaimsCreator payloadClaimsCreator,
-        ClientCredentialsTokenRequestParameters tokenRequestParameters);
-
-    */
-
     Task<RefreshTokenRequest> CreateRefreshTokenRequest(
         IPayloadClaimsCreator payloadClaimsCreator,
         RefreshTokenRequestParameters tokenRequestParameters,
         string? dPoPNonce);
-    
+
     Task<TokenExchangeTokenRequest> CreateTokenExchangeTokenRequest(
         IPayloadClaimsCreator payloadClaimsCreator,
         TokenExchangeTokenRequestParameters tokenRequestParameters,

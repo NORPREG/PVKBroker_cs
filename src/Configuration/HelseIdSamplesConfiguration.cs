@@ -1,6 +1,6 @@
 using HelseId.Samples.Common.Configuration;
 
-namespace HelseId.Configuration;
+namespace PvkBroker.Configuration;
 
 /// <summary>
 /// This class contains configurations that correspond to existing clients in the HelseID TEST environment.
@@ -11,7 +11,6 @@ public class HelseIdSamplesConfiguration : HelseIdConfiguration
                 SecurityKey privateKeyJwk,
                 string clientId,
                 string scope,
-                bool clientCredentialsUseDpop,
                 List<string>? resourceIndicators = null) :
             base(
                 privateKeyJwk,
@@ -25,6 +24,5 @@ public class HelseIdSamplesConfiguration : HelseIdConfiguration
         new(
             ConfigurationValues.PvkRsaKey,
             ConfigurationValues.PvkApiClientId,
-            ConfigurationValues.PvkApiScope,
-            ConfigurationValues.ClientCredentialsUseDpop);
+            ConfigurationValues.PvkApiScope);
 }

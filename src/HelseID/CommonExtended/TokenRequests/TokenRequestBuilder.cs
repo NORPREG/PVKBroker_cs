@@ -1,22 +1,19 @@
+using IdentityModel;
+using IdentityModel.Client;
+
+// FROM DLL
 using HelseId.Samples.Common.Configuration;
 using HelseId.Samples.Common.Interfaces.ClientAssertions;
 using HelseId.Samples.Common.Interfaces.Endpoints;
 using HelseId.Samples.Common.Interfaces.JwtTokens;
 using HelseId.Samples.Common.Interfaces.PayloadClaimsCreators;
-using HelseId.Samples.Common.Interfaces.TokenRequests;
 using HelseId.Samples.Common.Models;
-using IdentityModel;
-using IdentityModel.Client;
 
-namespace HelseId.Samples.Common.TokenRequests;
+using PvkBroker.HelseId.CommonExtended.Interfaces.TokenRequests;
 
-/// <summary>
-/// This class creates a token requests which can be used as refresh token grants,
-/// token exchange grants, or client credentials grants to the HelseID service.
-/// It requires an IClientAssertionsBuilder that will create the client
-/// assertion which is used for building the token request.
-/// It also requires an IHelseIdEndpointDiscoverer for finding the URL of the token endpoint.
-/// </summary>
+
+namespace PvkBroker.HelseId.CommonExtended.TokenRequests;
+
 public class TokenRequestBuilder : ITokenRequestBuilder
 {
     private readonly IClientAssertionsBuilder _clientAssertionsBuilder;
@@ -107,7 +104,7 @@ public class TokenRequestBuilder : ITokenRequestBuilder
             DPoPProofToken = _dPoPProofCreator.CreateDPoPProof(tokenEndpoint, "POST", dPoPNonce: dPoPNonce),
         };
     }
-    /*
+
     public async Task<ClientCredentialsTokenRequest> CreateClientCredentialsBearerTokenRequest(
     IPayloadClaimsCreator payloadClaimsCreator,
     ClientCredentialsTokenRequestParameters tokenRequestParameters)
@@ -127,7 +124,6 @@ public class TokenRequestBuilder : ITokenRequestBuilder
             // DPoPProofToken = _dPoPProofCreator.CreateDPoPProof(tokenEndpoint, "POST", dPoPNonce: dPoPNonce),
         };
     }
-    */
 
     public async Task<AuthorizationCodeTokenRequest> CreateAuthorizationCodeTokenRequest(
         IPayloadClaimsCreator payloadClaimsCreator,

@@ -4,13 +4,17 @@ using System.Text.Json;
 using System.IdentityModel.Tokens.Jwt;
 using Microsoft.IdentityModel.Tokens;
 using System.Security.Claims;
-using HelseId.Common.JwtTokens;
-using HelseId.Common.TokenRequestBuilder;
-using HelseId.Common.Configuration;
-using HelseId.ClientCredentials.Client;
-using HelseId.ClientCredentials.Configuration;
 
-namespace PvkBroker.ApiCaller;
+// FROM DLL
+using HelseId.Samples.Common.JwtTokens;
+using HelseId.Samples.Common.TokenRequestBuilder;
+using HelseId.Samples.Common.Configuration;
+
+using PvkBroker.HelseId.CommonOverloaded.ExtendedTokenRequestBuilder;
+using PvkBroker.HelseId.ClientCredentials.Client;
+using PvkBroker.HelseId.ClientCredentials.Configuration;
+
+namespace PvkBroker.Pvk.ApiCaller;
 
 public class AccessTokenCaller
 {
@@ -39,7 +43,7 @@ public class AccessTokenCaller
             RequireExpirationTime = true,
             ValidateIssuerSigningKey = true,
             ClockSkew = TimeSpan.Zero
-        }
+        };
 
         var signingKeys = await GetSigningKeysAsync(_clientConfigurator.configuration.JwksUri);
         validationParameters.IssuerSigningKeys = signingKeys;

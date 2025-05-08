@@ -1,4 +1,4 @@
-namespace HelseId.Configuration;
+namespace HelseId.Samples.Configuration;
 
 public class Organization
 {

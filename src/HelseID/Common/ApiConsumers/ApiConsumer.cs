@@ -10,7 +10,7 @@ namespace HelseId.Samples.Common.ApiConsumers;
 /// </summary>
 public class ApiConsumer : IApiConsumer
 {
-    private readonly IDPoPProofCreator? _idPoPProofCreator;
+    private readonly IDPoPProofCreator _idPoPProofCreator;
     public ApiConsumer(IDPoPProofCreator idPoPProofCreator)
     {
         _idPoPProofCreator = idPoPProofCreator;

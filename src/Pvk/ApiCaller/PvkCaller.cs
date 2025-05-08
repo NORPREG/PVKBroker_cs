@@ -1,12 +1,15 @@
 using System.Net.Http.Headers;
 using System.Text.Json;
+
+using PvkBroker.HelseId.ClientCredentials.Client;
+using PvkBroker.Configuration;
+
+// FROM DLL
+using HelseId.Samples.Common.Endpoints;
 using HelseId.Common.JwtTokens;
 using HelseId.Common.Configuration;
-using HelseId.ClientCredentials.Client;
-using HelseId.Configuration;
-using HelseId.Samples.Common.Endpoints;
 
-namespace PvkBroker.ApiCaller;
+namespace PvkBroker.Pvk.ApiCaller;
 
 public class PvkCaller
 {
@@ -37,7 +40,7 @@ public class PvkCaller
                request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
           }
 
-          return request
+        return request;
      }
 
      public async Task<HttpResponseMessage?> CallApiHentInnbyggere(string accessToken, string pagingReference = 0)
