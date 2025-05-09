@@ -8,12 +8,13 @@
 	<ItemGroup>
 		<ProjectReference Include="..\Configuration\PvkBroker.Configuration.csproj" />
 		<!-- <ProjectReference Include="..\HelseID\Common\PvkBroker.HelseId.Common.csproj" /> -->
+		<ProjectReference Include="..\HelseID\CommonExtended\PvkBroker.HelseId.CommonExtended.csproj" />
 		<ProjectReference Include="..\HelseID\ClientCredentials\PvkBroker.HelseId.ClientCredentials.csproj" />
 	</ItemGroup>
 
 	<ItemGroup>
 		<Reference Include="HelseId.Samples.Common">
-			<HintPath>..\..\dll\HelseId.Samples.Common.dll</HintPath>
+			<HintPath>..\..\lib\HelseId.Samples.Common.dll</HintPath>
 		</Reference>
 	</ItemGroup>
 

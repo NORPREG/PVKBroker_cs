@@ -7,30 +7,14 @@
   </PropertyGroup>
 
 	<!--
-  <ItemGroup>
-    <Compile Remove="OrganizationStore.cs" />
-  </ItemGroup>
-
-	
-  <ItemGroup>
-    <Compile Remove="ConfigurationValuesNew.cs" />
-  </ItemGroup>
-  -->
-
-  <ItemGroup>
-    <None Include="ConfigurationValuesNew.cs" />
-    <None Include="OrganizationStore.cs" />
-  </ItemGroup>
-
-	<!--
 	<ItemGroup>
 		<ProjectReference Include="..\Common\HelseId.Common.csproj" />
 	</ItemGroup>
 	-->
 
 	<ItemGroup>
-		<Reference Include="HelseId.Common">
-			<HintPath>..\..\dll\HelseId.Samples.Common.dll</HintPath>
+		<Reference Include="HelseId.Samples.Common">
+			<HintPath>..\..\lib\HelseId.Samples.Common.dll</HintPath>
 		</Reference>
 	</ItemGroup>
 

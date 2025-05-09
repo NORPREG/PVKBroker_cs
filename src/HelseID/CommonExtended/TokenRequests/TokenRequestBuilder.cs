@@ -11,7 +11,6 @@ using HelseId.Samples.Common.Models;
 
 using PvkBroker.HelseId.CommonExtended.Interfaces.TokenRequests;
 
-
 namespace PvkBroker.HelseId.CommonExtended.TokenRequests;
 
 public class TokenRequestBuilder : ITokenRequestBuilder

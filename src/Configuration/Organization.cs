@@ -1,4 +1,4 @@
-namespace HelseId.Samples.Configuration;
+namespace PvkBroker.Configuration;
 
 public class Organization
 {

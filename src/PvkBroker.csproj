@@ -6,11 +6,19 @@
 	</PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="src\HelseID\ClientCredentials\HelseId.ClientCredentials.csproj" />
-    <ProjectReference Include="src\Kodeliste\Kodeliste.csproj" />
-    <ProjectReference Include="src\Pvk\Pvk.csproj" />
-    <ProjectReference Include="src\Redcap\Redcap.csproj" />
+    <ProjectReference Include="src\Kodeliste\PvkBroker.Kodeliste.csproj" />
+    <ProjectReference Include="src\Pvk\PvkBroker.Pvk.csproj" />
+	<ProjectReference Include="src\HelseId\ClientCredentials\PvkBroker.HelseId.ClientCredentials.csproj" />
+	<ProjectReference Include="src\HelseId\CommonExtended\PvkBroker.HelseId.CommonExtended.csproj" />
+    <ProjectReference Include="src\Redcap\PvkBroker.Redcap.csproj" />
+	<ProjectReference Include="src\Configuration\PvkBroker.Configuration.csproj" />
   </ItemGroup>
+
+	<ItemGroup>
+		<Reference Include="HelseId.Samples.Common">
+			<HintPath>lib\HelseId.Samples.Common.dll</HintPath>
+		</Reference>
+	</ItemGroup>
 
 	<ItemGroup>
 		<PackageReference Include="System.CommandLine" Version="2.0.0-beta4.22272.1" />
@@ -19,3 +27,4 @@
 
 
 </Project>
+

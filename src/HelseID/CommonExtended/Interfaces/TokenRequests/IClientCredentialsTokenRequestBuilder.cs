@@ -5,7 +5,7 @@ using IdentityModel.Client;
 
 namespace PvkBroker.HelseId.CommonExtended.Interfaces.TokenRequests;
 
-public interface ITokenRequestBuilder : ITokenRequestBuilder
+public interface ITokenRequestBuilder
 {
     Task<ClientCredentialsTokenRequest> CreateClientCredentialsBearerTokenRequest(
         IPayloadClaimsCreator payloadClaimsCreator,

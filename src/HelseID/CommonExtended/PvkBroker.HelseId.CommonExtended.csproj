@@ -6,8 +6,8 @@
   </PropertyGroup>
 
 	<ItemGroup>
-		<Reference Include="HelseId.Common">
-			<HintPath>..\..\dll\HelseId.Samples.Common.dll</HintPath>
+		<Reference Include="HelseId.Samples.Common">
+			<HintPath>..\..\..\lib\HelseId.Samples.Common.dll</HintPath>
 		</Reference>
 	</ItemGroup>
 

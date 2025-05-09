@@ -1,4 +1,4 @@
-namespace HelseId.Configuration;
+namespace PvkBroker.Configuration;
 
 public static class OrganizationStore
 {

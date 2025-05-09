@@ -1,17 +1,20 @@
-using HelseId.ClientCredentials.Client;
-using HelseId.ClientCredentials.Configuration;
+using PvkBroker.HelseId.ClientCredentials.Client;
+using PvkBroker.HelseId.ClientCredentials.Configuration;
+using PvkBroker.Pvk.ApiCaller;
+
+using System.Security.Claims;
 
 // using PvkBroker.Encryption;
 // using PvkBroker.Kodeliste;
 
-namespace PvkBroker
+namespace PvkBroker.Pvk
 {
-    static class Program
+    public class Program
     {
-        AccessTokenCaller _accessTokenCaller = AccessTokenCaller();
-        PvkCaller _pvkCaller = PvkCaller();
+        AccessTokenCaller _accessTokenCaller = new AccessTokenCaller();
+        PvkCaller _pvkCaller = new PvkCaller();
 
-        static async Task Program()
+        static async Task Main()
         {
             string accessToken = await _accessTokenCaller.GetAccessToken();
             Console.WriteLine("Received access token:", accessToken);

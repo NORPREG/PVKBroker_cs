@@ -7,26 +7,39 @@ using System.Security.Claims;
 
 // FROM DLL
 using HelseId.Samples.Common.JwtTokens;
-using HelseId.Samples.Common.TokenRequestBuilder;
 using HelseId.Samples.Common.Configuration;
 
-using PvkBroker.HelseId.CommonOverloaded.ExtendedTokenRequestBuilder;
 using PvkBroker.HelseId.ClientCredentials.Client;
 using PvkBroker.HelseId.ClientCredentials.Configuration;
+using PvkBroker.Configuration;
+
+using SecurityKey = HelseId.Samples.Common.Configuration.SecurityKey;
+
+
+
 
 namespace PvkBroker.Pvk.ApiCaller;
 
 public class AccessTokenCaller
 {
-    private var _clientConfigurator = new ClientConfigurator();
-    private var _client = _clientConfigurator.ConfigureClient();
+    private ClientConfigurator _clientConfigurator;
+    private Machine2MachineClient _client;
 
-    public AccessTokenCaller() {}
+    public AccessTokenCaller()
+    {
+        _clientConfigurator = new ClientConfigurator();
+        _client = _clientConfigurator.ConfigureClient();
+    }
 
     public async Task<string> GetAccessToken()
     {
         using var httpClient = new HttpClient();
         string accessToken = await _client.GetAccessToken(httpClient);
+
+        if (string.IsNullOrEmpty(accessToken))
+        {
+            throw new Exception("Failed to retrieve access token.");
+        }
 
         return accessToken;
     }
@@ -36,16 +49,16 @@ public class AccessTokenCaller
         TokenValidationParameters validationParameters = new TokenValidationParameters
         {
             ValidateIssuer = true,
-            ValidIssuer = _clientConfigurator.configuration.StsUrl,
+            ValidIssuer = ConfigurationValues.StsUrl,
             ValidateAudience = true,
-            ValidAudience = _clientConfigurator.configuration.ApiForPvkAudience,
+            ValidAudience = ConfigurationValues.ApiForPvkAudience,
             ValidateLifetime = true,
             RequireExpirationTime = true,
             ValidateIssuerSigningKey = true,
             ClockSkew = TimeSpan.Zero
         };
 
-        var signingKeys = await GetSigningKeysAsync(_clientConfigurator.configuration.JwksUri);
+        var signingKeys = await GetSigningKeysAsync(ConfigurationValues.JwksUri);
         validationParameters.IssuerSigningKeys = signingKeys;
 
         var handler = new JwtSecurityTokenHandler();
@@ -59,10 +72,9 @@ public class AccessTokenCaller
         {
             throw new UnauthorizedAccessException($"Token validation failed: {ex.Message}");
         }
-
     }
 
-    private async Task<IEnumerable<SecurityKey>> GetSigningKeysAsync(string jwksUri)
+    private async Task<IEnumerable<Microsoft.IdentityModel.Tokens.SecurityKey>> GetSigningKeysAsync(string jwksUri)
     {
         var configManager = new Microsoft.IdentityModel.Protocols.ConfigurationManager<Microsoft.IdentityModel.Protocols.OpenIdConnect.OpenIdConnectConfiguration>(
             jwksUri,
@@ -72,3 +84,17 @@ public class AccessTokenCaller
         return config.SigningKeys;
     }
 }
+
+/*
+public static class SecurityKeyConverter
+{
+    public static Microsoft.IdentityModel.Tokens.SecurityKey ConvertToMicrosoftSecurityKey(HelseId.Samples.Common.Configuration.SecurityKey helseIdKey)
+    {
+        // Parse the JWK value into a JsonWebKey
+        var jsonWebKey = new JsonWebKey(helseIdKey.JwkValue);
+
+        // Return the JsonWebKey as a SecurityKey
+        return jsonWebKey;
+    }
+}
+*/

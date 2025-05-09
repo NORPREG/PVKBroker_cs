@@ -32,7 +32,7 @@ public class ClientConfigurator
         var discoveryDocumentGetter = new DiscoveryDocumentGetter(ConfigurationValues.StsUrl);
         var endpointDiscoverer = new HelseIdEndpointsDiscoverer(discoveryDocumentGetter);
         var configuration = SetUpHelseIdConfiguration();
-        var extendedTokenRequestBuilder = CreateTokenRequestBuilder(configuration, endpointDiscoverer);
+        var tokenRequestBuilder = CreateTokenRequestBuilder(configuration, endpointDiscoverer);
         var tokenRequestParameters = SetUpTokenRequestParameters();
         var expirationTimeCalculator = new ExpirationTimeCalculator(new DateTimeService());
         var payloadClaimsCreator = SetUpPayloadClaimsCreator();

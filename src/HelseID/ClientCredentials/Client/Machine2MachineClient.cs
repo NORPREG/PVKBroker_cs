@@ -7,7 +7,7 @@ using HelseId.Samples.Common.Interfaces.TokenExpiration;
 // using HelseId.Samples.Common.Interfaces.TokenRequests;
 using HelseId.Samples.Common.Models;
 
-using PvkBroker.HelseId.CommonExtended.Interfaces.TokenRequestBuilder;
+using PvkBroker.HelseId.CommonExtended.Interfaces.TokenRequests;
 
 
 using PvkBroker.Configuration;
@@ -47,7 +47,7 @@ public class Machine2MachineClient
         return _persistedAccessToken;
     }
 
-    private async Task<string> GetAccessToken(HttpClient httpClient)
+    public async Task<string> GetAccessToken(HttpClient httpClient)
     {
         if (DateTime.UtcNow > _persistedAccessTokenExpiresAt)
         {

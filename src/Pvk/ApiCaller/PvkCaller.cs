@@ -1,37 +1,47 @@
 using System.Net.Http.Headers;
 using System.Text.Json;
+using IdentityModel.Client;
 
-using PvkBroker.HelseId.ClientCredentials.Client;
+
 using PvkBroker.Configuration;
+using PvkBroker.HelseId.ClientCredentials.Client;
+using PvkBroker.HelseId.ClientCredentials.Configuration;
 
 // FROM DLL
 using HelseId.Samples.Common.Endpoints;
-using HelseId.Common.JwtTokens;
-using HelseId.Common.Configuration;
+using HelseId.Samples.Common.JwtTokens;
+using HelseId.Samples.Common.Interfaces.JwtTokens;
+using HelseId.Samples.Common.Configuration;
+using HelseId.Samples.Common.Models;
 
 namespace PvkBroker.Pvk.ApiCaller;
 
+
+
 public class PvkCaller
 {
-     var _configuration = SetUpHelseIdConfiguration();
+    IDPoPProofCreator? _idPoPProofCreator;
+    HelseIdConfiguration _configuration;
 
-     public PvkCaller() {
-          _idPoPProofCreator = null;
-     }
+    public PvkCaller() {
+        _configuration = SetUpHelseIdConfiguration();
 
-     public PvkCaller(IDPoPProofCreator idPoPProofCreator)
+    }
+
+    public PvkCaller(IDPoPProofCreator idPoPProofCreator)
      {
-          _idPoPProofCreator = idPoPProofCreator;
-     }
+        _idPoPProofCreator = idPoPProofCreator;
+        _configuration = SetUpHelseIdConfiguration();
+    }
 
      public HttpRequestMessage GetBaseRequestParameters(string accessToken, string url)
      {
           using var httpClient = new HttpClient();
           var request = new HttpRequestMessage(HttpMethod.Get, url);
 
-          if (_idPoPProofCreator)
+          if (ConfigurationValues.ClientCredentialsUseDpop)
           {
-               var dPopProof = _idPoPProofCreator.CreateDPoPProof(_url, "GET", accessToken: accessToken);
+               var dPopProof = _idPoPProofCreator.CreateDPoPProof(url, "GET", accessToken: accessToken);
                request.SetDPoPToken(accessToken, dPopProof);
           }
 
@@ -43,20 +53,16 @@ public class PvkCaller
         return request;
      }
 
-     public async Task<HttpResponseMessage?> CallApiHentInnbyggere(string accessToken, string pagingReference = 0)
+     public async Task<HttpResponseMessage?> CallApiHentInnbyggere(string accessToken, int pagingReference = 0)
      {
-          var url = _configuration.PvkBaseUrl + _configuration.PvkHentInnbyggereUrl;
+          var url = ConfigurationValues.PvkBaseUrl + ConfigurationValues.PvkHentInnbyggereUrl;
 
           var request = GetBaseRequestParameters(accessToken, url);
 
-          // need new payload to adhere to v2.....
-          // https://helsenorge.atlassian.net/wiki/spaces/HELSENORGE/pages/
-          // 2328952849/Hente+informasjon+fra+PVK+om+innbyggers+personverninnstillinger
-
           var payload = new
           {
-               definisjonGuid = _configuration.PvkApiClientId,
-               partKode = _configuration.PvkPartKode,
+               definisjonGuid = ConfigurationValues.PvkApiClientId,
+               partKode = ConfigurationValues.PvkPartKode,
                pagingReference = pagingReference
           };
 
@@ -74,4 +80,11 @@ public class PvkCaller
                     PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
                });
      }
+
+    private static HelseIdConfiguration SetUpHelseIdConfiguration()
+    {
+        var result = HelseIdSamplesConfiguration.ClientCredentialsClient;
+
+        return result;
+    }
 }
