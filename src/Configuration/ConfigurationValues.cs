@@ -22,17 +22,22 @@ public static class ConfigurationValues
 
     public const string ClientAmr = "private_key_jwt";
 
+    public const string CachedAccessTokenFolder = "../../keys/cached/";
+    public const string CachedAccessTokenFilePath = CachedAccessTokenFolder + "access_token_cache.json";
+
     // Audiences and scopes for using the PVK test token exchange
     public const string ApiForPvkAudience = "nhn:helsenorge.eksternapi";
     public const string ApiForPvkReadScope = $"{ApiForPvkAudience}/personverninnstilling_read";
     public const string ApiForPvkWriteScope = $"{ApiForPvkAudience}/personverninnstilling_write";
 
-    public const string TestPvkBaseUrl = "https://eksternapi-helsenett.hn2.test.nhn.no";
-    public const string ProdPvkBaseUrl = "https://eksternapi-helsenett.hn2.test.nhn.no";
+    public const string TestPvkSystemUrl = "https://eksternapi-helsenett.hn2.test.nhn.no";
+    public const string ProdPvkSystemUrl = "https://eksternapi-helsenett.hn2.test.nhn.no";
+    public static string PvkSystemUrl = environment == "test" ? TestPvkSystemUrl : ProdPvkSystemUrl;
 
-    public static string PvkBaseUrl = environment == "test" ? TestPvkBaseUrl : ProdPvkBaseUrl;
+    public static string PvkBaseUrl = "/personvern/Personverninnstillinger";
 
-    public static string TestPvkHentInnbyggereUrl = $"{PvkBaseUrl}/HentInnbyggereAktivePiForDefinisjon/v2";
+    // DON'T put system URL here, happens later on
+    public static string PvkHentInnbyggereUrl = $"{PvkBaseUrl}/HentInnbyggereAktivePiForDefinisjon/v2";
 
     public const bool ClientCredentialsUseDpop = false;
 
@@ -59,11 +64,13 @@ public static class ConfigurationValues
     // -----------------------------------------------------------------------------------------------------------------
     // Client IDs:
     // -----------------------------------------------------------------------------------------------------------------
-    // In HelseID, these are normally set as GUIDS, here we have named them for better readability
-    // -----------------------------------------------------------------------------------------------------------------
 
-    public const string TestPvkApiClientId = "a1c7bdb1-07be-43cc-b876-95fc5c7aa180"; // use this
-    public const string ProdPvkApiClientId = "a1c7bdb1-07be-43cc-b876-95fc5c7aa180"; // use this
+    public const string TestPvkApiClientId = "a1c7bdb1-07be-43cc-b876-95fc5c7aa180"; // This is HelseID client ID
+    public const string ProdPvkApiClientId = "a1c7bdb1-07be-43cc-b876-95fc5c7aa180"; // This is HelseID client ID
+
+    public const string NewPvkApiClientId = "5aee1830-29f5-4f7f-8927-a20ee9fb4125"; // From Word document
+    public const string NewPvkDefinisjonGuid = "2c11f0ca-7270-43f1-a473-bac325feb3f6"; // From Word document
+
     public static string PvkApiClientId = environment == "test" ? TestPvkApiClientId : ProdPvkApiClientId;
 
     public const string TestPvkPartKode = "prostraa";
@@ -82,7 +89,7 @@ public static class ConfigurationValues
     public static string GetPrivateKey()
     {
         // Test load PEM file
-        var pem = File.ReadAllText("keys/test_pvk_private_key_encrypted.pem");
+        var pem = File.ReadAllText("../../keys/test_pvk_private_key_encrypted.pem");
         var rsa = RSA.Create();
         rsa.ImportFromEncryptedPem(pem.ToCharArray(), "test_password");
 

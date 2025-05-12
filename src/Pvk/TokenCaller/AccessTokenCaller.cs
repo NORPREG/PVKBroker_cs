@@ -14,8 +14,7 @@ using PvkBroker.HelseId.ClientCredentials.Configuration;
 using PvkBroker.Configuration;
 
 using SecurityKey = HelseId.Samples.Common.Configuration.SecurityKey;
-
-
+using System;
 
 
 namespace PvkBroker.Pvk.ApiCaller;
@@ -31,8 +30,22 @@ public class AccessTokenCaller
         _client = _clientConfigurator.ConfigureClient();
     }
 
+    // m^x (m/s)^y (kg/m^3)^z
+    // E = m^2 kg / (s^2)
+    // z = 1 -> E = m^x m^y / s^y * kg / m^3 
+    // y = 2 -> E / m^x m^-1 / s^2 kg
+    // x = 3 -> E = m^2 kg / s^2 
+
     public async Task<string> GetAccessToken()
     {
+
+        var cached = TokenCacher.GetFromCache();
+        if (cached != null)
+        {
+            Console.WriteLine("Using existing token");
+            return cached.AccessToken;
+        }
+
         using var httpClient = new HttpClient();
         string accessToken = await _client.GetAccessToken(httpClient);
 
@@ -40,6 +53,12 @@ public class AccessTokenCaller
         {
             throw new Exception("Failed to retrieve access token.");
         }
+
+        // Store the access token in the cache
+        var jwtHandler = new JwtSecurityTokenHandler();
+        var jwtToken = jwtHandler.ReadJwtToken(accessToken);
+        var expirationTime = jwtToken.ValidTo;
+        TokenCacher.SaveToCache(accessToken, expirationTime);
 
         return accessToken;
     }
@@ -74,6 +93,7 @@ public class AccessTokenCaller
         }
     }
 
+    // Don't confuse this SecurityKey with the one in the HelseId.Samples.Common.Configuration namespace
     private async Task<IEnumerable<Microsoft.IdentityModel.Tokens.SecurityKey>> GetSigningKeysAsync(string jwksUri)
     {
         var configManager = new Microsoft.IdentityModel.Protocols.ConfigurationManager<Microsoft.IdentityModel.Protocols.OpenIdConnect.OpenIdConnectConfiguration>(

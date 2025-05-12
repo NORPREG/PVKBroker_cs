@@ -11,12 +11,11 @@ namespace PvkBroker.Pvk
 {
     public class Program
     {
-        AccessTokenCaller _accessTokenCaller = new AccessTokenCaller();
-        PvkCaller _pvkCaller = new PvkCaller();
-
-        static async Task Main()
+        static async Task Main(string[] args)
         {
+            AccessTokenCaller _accessTokenCaller = new AccessTokenCaller();
             string accessToken = await _accessTokenCaller.GetAccessToken();
+
             Console.WriteLine("Received access token:", accessToken);
 
             ClaimsPrincipal principal = await _accessTokenCaller.ValidateAccessTokenAsync(accessToken);
@@ -26,6 +25,7 @@ namespace PvkBroker.Pvk
                 Console.WriteLine("CLAIM TYPE: " + claim.Type + "; CLAIM VALUE: " + claim.Value);
             }
 
+            PvkCaller _pvkCaller = new PvkCaller();
             string result = await _pvkCaller.CallApiHentInnbyggere(accessToken);
             Console.WriteLine("PVK API call result:", result);
         }
