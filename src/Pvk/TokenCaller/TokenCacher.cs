@@ -1,4 +1,5 @@
 using PvkBroker.Configuration;
+using Serilog;
 
 namespace PvkBroker.Pvk.ApiCaller;
 
@@ -18,33 +19,36 @@ public class TokenCacher
         Directory.CreateDirectory(CachedAccessTokenFolder);
 
         if (!File.Exists(CachedAccessTokenFilePath))
+        {
             return null;
-
+        }
+            
         try
         {
             var json = File.ReadAllText(CachedAccessTokenFilePath);
             var cachedToken = JsonSerializer.Deserialize<CachedToken>(json);
             if (cachedToken != null && cachedToken.ExpiresAt > DateTime.UtcNow)
             {
+                Log.Information("Found cached Access Token that is still valid, using this.");
                 return cachedToken;
             }
         }
         catch (JsonException ex)
         {
             // Handle JSON deserialization error
-            Console.WriteLine($"Error deserializing cached token: {ex.Message}. Returning null.");
+            Log.Error("Error deserializing cached token: {@ex}. Returning null.", ex);
             return null;
         }
         catch (IOException)
         {
             // Handle file read error
-            Console.WriteLine("Error reading cached token file. Returning null.");
+            Log.Error("Error reading cached token file. Returning null.");
             return null; 
         }
         catch (Exception ex)
         {
             // Handle any other exceptions
-            Console.WriteLine($"Unexpected error: {ex.Message}. Returning null.");
+            Log.Error($"Unexpected error in reading cached token: {@ex}. Returning null.", ex);
             return null;
         }
 

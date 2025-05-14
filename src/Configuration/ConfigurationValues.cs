@@ -1,6 +1,7 @@
 using Microsoft.IdentityModel.Tokens;
 using System.Runtime.InteropServices;
 using System.Security.Cryptography;
+using System;
 using SecurityKey = HelseId.Samples.Common.Configuration.SecurityKey;
 
 namespace PvkBroker.Configuration;
@@ -36,10 +37,12 @@ public static class ConfigurationValues
 
     public static string PvkBaseUrl = "/personvern/Personverninnstillinger";
 
-    // DON'T put system URL here, happens later on
-    public static string PvkHentInnbyggereUrl = $"{PvkBaseUrl}/HentInnbyggereAktivePiForDefinisjon/v2";
+    // Don't put system URL here, happens later on
+    public static string PvkHentInnbyggereAktivePiForDefinisjonUrl = $"{PvkBaseUrl}/HentInnbyggereAktivePiForDefinisjon/v2";
+    public static string PvkHentInnbyggersPiForPartUrl = $"{PvkBaseUrl}/HentInnbyggersPiForPart/v2";
+    public static string PvkSjekkInnbyggersPiStatusUrl = $"{PvkBaseUrl}/SjekkInnbyggersPiStatus/v2";
 
-    public const bool ClientCredentialsUseDpop = false;
+    public const bool ClientCredentialsUseDpop = true;
 
     // HelseID scopes defined at https://helseid.atlassian.net/wiki/spaces/HELSEID/pages/5603417/Scopes
     private const string GeneralHelseIdScopes = "helseid://scopes/identity/pid helseid://scopes/identity/pid_pseudonym helseid://scopes/identity/assurance_level helseid://scopes/hpr/hpr_number helseid://scopes/identity/network helseid://scopes/identity/security_level";
@@ -67,15 +70,27 @@ public static class ConfigurationValues
 
     public const string TestPvkApiClientId = "a1c7bdb1-07be-43cc-b876-95fc5c7aa180"; // This is HelseID client ID
     public const string ProdPvkApiClientId = "a1c7bdb1-07be-43cc-b876-95fc5c7aa180"; // This is HelseID client ID
+    
+    public const string NewPvkApiClientId = "5aee1830-29f5-4f7f-8927-a20ee9fb4125"; // where is this from?
 
-    public const string NewPvkApiClientId = "5aee1830-29f5-4f7f-8927-a20ee9fb4125"; // From Word document
-    public const string NewPvkDefinisjonGuid = "2c11f0ca-7270-43f1-a473-bac325feb3f6"; // From Word document
+    public const string PvkDefinisjonGuid_1 = "2c11f0ca-7270-43f1-a473-bac325feb3f6"; 
+    public const string PvkDefinisjonNavn_1 = "Proton- og stråleregister samtykke"; 
+
+    public const string PvkDefinisjonGuid_2 = "1615e446-93a9-4cdc-97b0-9e32f47c1df9";
 
     public static string PvkApiClientId = environment == "test" ? TestPvkApiClientId : ProdPvkApiClientId;
 
     public const string TestPvkPartKode = "prostraa";
     public const string ProdPvkPartKode = "prostraa";
     public static string PvkPartKode = environment == "test" ? TestPvkPartKode : ProdPvkPartKode;
+
+    // MySQL database connection string
+    public const string KodelisteServer = "localhost";
+    public const string KodelisteDbName =  "kodeliste";
+
+    // Switch to user-based login?
+    public static string KodelisteUsername = Environment.GetEnvironmentVariable("KodelisteUsername"); // "cs";
+    public static string KodelistePassword = Environment.GetEnvironmentVariable("KodelistePassword"); // "InitializeComponent547";
 
     // -----------------------------------------------------------------------------------------------------------------
     // Client scopes:

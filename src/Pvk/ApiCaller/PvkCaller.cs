@@ -16,31 +16,47 @@ using HelseId.Samples.Common.Models;
 using System.Net.Cache;
 using System.Net.Http;
 using System;
+using Serilog;
 
 namespace PvkBroker.Pvk.ApiCaller;
 
 public class PvkCaller
 {
-    IDPoPProofCreator? _idPoPProofCreator;
-    HelseIdConfiguration _configuration;
-    HttpClient _httpClient;
+    private readonly IDPoPProofCreator? _idPoPProofCreator;
+    private readonly HelseIdConfiguration _configuration;
+    private static HttpClient _httpClient;
 
     public PvkCaller() {
         _configuration = SetUpHelseIdConfiguration();
         _httpClient = new HttpClient();
+        
+        if (ConfigurationValues.ClientCredentialsUseDpop == true)
+        {
+            _idPoPProofCreator = new DPoPProofCreator(_configuration);
+        }
+
     }
 
-    public PvkCaller(IDPoPProofCreator idPoPProofCreator)
+    public HttpRequestMessage GetBaseRequestParameters(string accessToken, string url, string httpMethod)
      {
-        _idPoPProofCreator = idPoPProofCreator;
-        _configuration = SetUpHelseIdConfiguration();
-        _httpClient = new HttpClient();
-    }
 
-    public HttpRequestMessage GetBaseRequestParameters(string accessToken, string url)
-     {
-        var request = new HttpRequestMessage(HttpMethod.Get, url);
+        HttpRequestMessage request;
 
+        // Set the base URL and HTTP method
+        if (httpMethod == "GET")
+        {
+            request = new HttpRequestMessage(HttpMethod.Get, url);
+        }
+        else if (httpMethod == "POST")
+        {
+            request = new HttpRequestMessage(HttpMethod.Post, url);
+        }
+        else
+        {
+            throw new ArgumentException("Invalid HTTP method specified. Use 'GET' or 'POST'.");
+        }
+
+        // Set DPoP or Bearer token
         if (ConfigurationValues.ClientCredentialsUseDpop == true)
         {
             var dPopProof = _idPoPProofCreator.CreateDPoPProof(url, "GET", accessToken: accessToken);
@@ -55,44 +71,67 @@ public class PvkCaller
         return request;
      }
 
-     public async Task<string?> CallApiHentInnbyggere(string accessToken, int pagingReference = 0)
-     {
-        var url = ConfigurationValues.PvkSystemUrl + ConfigurationValues.PvkHentInnbyggereUrl;
+    public async Task<string?> CallApiSjekkInnbyggersPiStatus(string fnr, string accessToken, int pagingReference = 0)
+    {
+        var url = ConfigurationValues.PvkSystemUrl + ConfigurationValues.PvkSjekkInnbyggersPiStatusUrl;
 
-        var request = GetBaseRequestParameters(accessToken, url);
+        var request = GetBaseRequestParameters(accessToken, url, "POST");
 
         var payload = new
         {
-            // definisjonGuid = ConfigurationValues.PvkApiClientId,
-            definisjonGuid = ConfigurationValues.NewPvkDefinisjonGuid,
-            // definisjonGuid = "1615e446-93a9-4cdc-97b0-9e32f47c1df9",
+            innbyggerFnr = fnr,
+            definisjonGuid = ConfigurationValues.PvkDefinisjonGuid_1,
+            definisjonNavn = ConfigurationValues.PvkDefinisjonNavn_1,
             partKode = ConfigurationValues.PvkPartKode,
-            pagingReference = pagingReference
         };
 
         request.Content = new StringContent(JsonSerializer.Serialize(payload));
         request.Content.Headers.ContentType = new MediaTypeHeaderValue("application/json");
-        
-        await LogHttpRequest(request);
 
-        var response = await _httpClient.SendAsync(request);
+        var response = await SendRequestAndHandleResponse(request);
 
-        LogHttpResponse(response);
-
-        // response.EnsureSuccessStatusCode();
-        var responseBody = await response.Content.ReadAsStringAsync();
-
-        return responseBody;
-
-        /*
-        return JsonSerializer.Deserialize<ApiResponseHentInnbyggere>(
-            responseBody,
-            new JsonSerializerOptions
-            {
-                PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
-            });
-        */
+        return response;
     }
+
+    public async Task<string?> CallApiHentInnbyggersForPart(string fnr, string accessToken, int pagingReference = 0)
+    {
+        var url = ConfigurationValues.PvkSystemUrl + ConfigurationValues.PvkHentInnbyggersPiForPartUrl;
+
+        var request = GetBaseRequestParameters(accessToken, url, "POST");
+
+        var payload = new
+        {
+            innbyggerFnr = fnr,
+            partKode = ConfigurationValues.PvkPartKode
+        };
+
+        request.Content = new StringContent(JsonSerializer.Serialize(payload));
+        request.Content.Headers.ContentType = new MediaTypeHeaderValue("application/json"); 
+        
+        var response = await SendRequestAndHandleResponse(request);
+
+        return response;
+    }
+
+    public async Task<string?> CallApiHentInnbyggereAktivePiForDefinisjon(string accessToken, int pagingReference = 0)
+     {
+        var query = new Dictionary<string, string>
+        {
+            { "definisjonGuid", ConfigurationValues.PvkDefinisjonGuid_1 },
+            { "partKode", ConfigurationValues.PvkPartKode },
+            { "pagingReference", pagingReference.ToString() }
+        };
+
+
+        var queryString = string.Join("&", query.Select(kvp => $"{kvp.Key}={kvp.Value}"));
+
+        var url = ConfigurationValues.PvkSystemUrl + ConfigurationValues.PvkHentInnbyggereAktivePiForDefinisjonUrl + "?" + queryString;
+        var request = GetBaseRequestParameters(accessToken, url, "GET");
+
+        var response = await SendRequestAndHandleResponse(request);
+
+        return response;
+}
 
     private static HelseIdConfiguration SetUpHelseIdConfiguration()
     {
@@ -152,5 +191,35 @@ public class PvkCaller
         }
 
         Console.WriteLine("------------------------");
+    }
+
+    public static async Task<string> SendRequestAndHandleResponse(HttpRequestMessage request)
+    {
+        await LogHttpRequest(request);
+        var response = await _httpClient.SendAsync(request);
+        await LogHttpResponse(response);
+
+        if (response.IsSuccessStatusCode)
+        {
+            Log.Information("Successful response from PVK API.");
+            var responseBody = await response.Content.ReadAsStringAsync();
+            return responseBody;
+
+        }
+        else
+        {
+            // handle failure
+            Log.Error("Error in PVK HTTP response: {@response}", response);
+            return null;
+        }
+
+        /* Consider this
+        return JsonSerializer.Deserialize<ApiResponseHentInnbyggere>(
+            responseBody,
+            new JsonSerializerOptions
+            {
+                PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+            });
+        */
     }
 }

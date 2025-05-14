@@ -16,6 +16,9 @@ using PvkBroker.Configuration;
 using SecurityKey = HelseId.Samples.Common.Configuration.SecurityKey;
 using System;
 
+using Serilog;
+using System.Reflection.Metadata.Ecma335;
+
 
 namespace PvkBroker.Pvk.ApiCaller;
 
@@ -30,19 +33,11 @@ public class AccessTokenCaller
         _client = _clientConfigurator.ConfigureClient();
     }
 
-    // m^x (m/s)^y (kg/m^3)^z
-    // E = m^2 kg / (s^2)
-    // z = 1 -> E = m^x m^y / s^y * kg / m^3 
-    // y = 2 -> E / m^x m^-1 / s^2 kg
-    // x = 3 -> E = m^2 kg / s^2 
-
     public async Task<string> GetAccessToken()
     {
-
         var cached = TokenCacher.GetFromCache();
         if (cached != null)
         {
-            Console.WriteLine("Using existing token");
             return cached.AccessToken;
         }
 
@@ -51,13 +46,14 @@ public class AccessTokenCaller
 
         if (string.IsNullOrEmpty(accessToken))
         {
-            throw new Exception("Failed to retrieve access token.");
+            return null;
         }
 
         // Store the access token in the cache
         var jwtHandler = new JwtSecurityTokenHandler();
         var jwtToken = jwtHandler.ReadJwtToken(accessToken);
         var expirationTime = jwtToken.ValidTo;
+
         TokenCacher.SaveToCache(accessToken, expirationTime);
 
         return accessToken;
@@ -89,6 +85,7 @@ public class AccessTokenCaller
         }
         catch (SecurityTokenException ex)
         {
+            Log.Error("Error validating access token: {@ex}", ex);
             throw new UnauthorizedAccessException($"Token validation failed: {ex.Message}");
         }
     }
@@ -104,17 +101,3 @@ public class AccessTokenCaller
         return config.SigningKeys;
     }
 }
-
-/*
-public static class SecurityKeyConverter
-{
-    public static Microsoft.IdentityModel.Tokens.SecurityKey ConvertToMicrosoftSecurityKey(HelseId.Samples.Common.Configuration.SecurityKey helseIdKey)
-    {
-        // Parse the JWK value into a JsonWebKey
-        var jsonWebKey = new JsonWebKey(helseIdKey.JwkValue);
-
-        // Return the JsonWebKey as a SecurityKey
-        return jsonWebKey;
-    }
-}
-*/

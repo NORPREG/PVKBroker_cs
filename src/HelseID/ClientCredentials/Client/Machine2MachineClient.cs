@@ -9,8 +9,9 @@ using HelseId.Samples.Common.Models;
 
 using PvkBroker.HelseId.CommonExtended.Interfaces.TokenRequests;
 
-
+using Serilog;
 using PvkBroker.Configuration;
+using System.Reflection.Metadata.Ecma335;
 
 namespace PvkBroker.HelseId.ClientCredentials.Client;
 
@@ -49,18 +50,12 @@ public class Machine2MachineClient
 
     public async Task<string> GetAccessToken(HttpClient httpClient)
     {
-        if (DateTime.UtcNow > _persistedAccessTokenExpiresAt)
-        {
-            var tokenResponse = await GetAccessTokenFromHelseId(httpClient);
-            _persistedAccessTokenExpiresAt = _expirationTimeCalculator.CalculateTokenExpirationTimeUtc(tokenResponse.ExpiresIn);
-            _persistedAccessToken = tokenResponse.AccessToken!;
-        }
-        else
-        {
-            // Push to logger
-            Console.WriteLine("The access token has not yet expired, no call was made to HelseID for a new token.");
-        }
-        return _persistedAccessToken;
+        // Token caching is file based and happens in Pvk/TokenCaller/AccesTokenCaller.cs
+
+        var tokenResponse = await GetAccessTokenFromHelseId(httpClient);
+        string accessToken = tokenResponse.AccessToken!;
+
+        return accessToken;
     }
 
     private async Task<TokenResponse> GetAccessTokenFromHelseId(HttpClient httpClient)
@@ -70,12 +65,15 @@ public class Machine2MachineClient
 
         if (tokenResponse.IsError || tokenResponse.AccessToken == null)
         {
-            await WriteErrorToConsole(tokenResponse);
+            Log.Error("Error in Access Token response from HelseID: {@tokenResponse}.", tokenResponse);
             throw new Exception();
         }
+        else
+        {
+            Log.Information("Successfully received Access Token from HelseID.");
+        }
 
-        WriteAccessTokenFromTokenResult(tokenResponse);
-
+        // WriteAccessTokenFromTokenResult(tokenResponse);
         return tokenResponse;
     }
 
@@ -97,7 +95,7 @@ public class Machine2MachineClient
                 _tokenRequestParameters);
         }
         
-        InspectRequest(request);
+        // InspectRequest(request);
 
         var tokenResponse = await httpClient.RequestClientCredentialsTokenAsync(request);
 
@@ -124,41 +122,10 @@ public class Machine2MachineClient
         Console.WriteLine("------");
     }
 
-    private static async Task WriteErrorToConsole(TokenResponse tokenResponse) {
-        await Console.Error.WriteLineAsync("An error occured:");
-        await Console.Error.WriteLineAsync(tokenResponse.Error);
-    }
-
     private static void WriteAccessTokenFromTokenResult(TokenResponse tokenResponse) {
         Console.WriteLine("The application received this access token from HelseID:");
         Console.WriteLine(tokenResponse.AccessToken);
         Console.WriteLine("Copy/paste the access token string at https://jwt.ms to see the contents");
         Console.WriteLine("------");
     }
-
-    /*
-    private async Task CallApi(HttpClient httpClient, string accessToken)
-    {
-        try
-        {
-            Console.WriteLine("Using the access token to call the sample API");
-            ApiResponse? response;
-            response = await _apiConsumer.CallApiWithDPoPToken(httpClient, ConfigurationValues.PvkApiUrlForM2M, accessToken);
-            var notPresent = "<not present>";
-            var supplierOrganization = OrganizationStore.GetOrganization(response?.SupplierOrganizationNumber);
-            var parentOrganization = OrganizationStore.GetOrganization(response?.ParentOrganizationNumber);
-            var childOrganization = OrganizationStore.GetOrganizationWithChild(response?.ChildOrganizationNumber);
-            Console.WriteLine($"Response from the sample API:");
-            Console.WriteLine($"{response?.Greeting}");
-            Console.WriteLine($"Supplier organization number (for multitenancy): '{supplierOrganization?.ParentName ?? notPresent}'");
-            Console.WriteLine($"Parent organization number: '{parentOrganization?.ParentName ?? notPresent}'");
-            Console.WriteLine($"Child organization number: '{childOrganization?.ChildName ?? notPresent}'");
-        }
-        catch (HttpRequestException e)
-        {
-            Console.WriteLine($"The sample API did not accept the request at address '{ConfigurationValues.PvkApiUrlForM2M}'. (Have you started the sample API application (in the 'SampleAPI' folder)?");
-            Console.WriteLine($"Error message: '{e.Message}'");
-        }
-    }
-    */
 }
