@@ -5,6 +5,8 @@ using System.Linq;
 using System.Text;
 using Serilog;
 
+// TODO
+// Change to prepended IV in string and not key. iv_b64 : cipher_b64
 
 namespace PvkBroker.Kodeliste
 {
@@ -98,3 +100,30 @@ namespace PvkBroker.Kodeliste
         }
     }
 }
+
+// Code example where the IV is declared in the string iv_base64:cipher_base64
+// This looks a LOT better than my code from above where PKCS7 is explicitly modeled
+
+/*
+public static string DecryptAesColonSeparated(string fnrAes, byte[] key)
+{
+    var parts = fnrAes.Split(':');
+    if (parts.Length != 2)
+        throw new ArgumentException("fnrAes må være på formatet 'iv:cipher'");
+
+    byte[] iv = Convert.FromBase64String(parts[0]);
+    byte[] cipherText = Convert.FromBase64String(parts[1]);
+
+    using var aes = Aes.Create();
+    aes.Key = key;
+    aes.IV = iv;
+    aes.Padding = PaddingMode.PKCS7;
+    aes.Mode = CipherMode.CBC;
+
+    using var decryptor = aes.CreateDecryptor();
+    using var ms = new MemoryStream(cipherText);
+    using var cs = new CryptoStream(ms, decryptor, CryptoStreamMode.Read);
+    using var sr = new StreamReader(cs);
+    return sr.ReadToEnd();
+}
+*/

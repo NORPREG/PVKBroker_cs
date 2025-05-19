@@ -156,6 +156,16 @@ response = pvk_session.SjekkInnbyggersPiStatus(FNR_LINE)
 print(response.json()['aktiv'])
 ```
 
+## Workflow when syncing against PVK 
+* Get list of all reserved patients from PVK
+* Loop through PatientID table
+     * For each PatientID table entry, decrypt the fnr
+     * For each fk_patient_key, decrypt the lastest PvkEvent->is_reserved_aes
+* For each patient with is_reserved = 1 and not in lastest reserved patients from PVK
+     * Remove from NORPREG with RedcapRemovePatient(patient_key)
+* For each patient with is_reserved = 0 and in lastest reserved patients from PVK
+     * Add to NORPREG with RedcapAddPatient(patient_key)
+
 ## TODO
 * Build REDCap integration (using modules from DICOM Broker)
 * Add business logic for patient transfer
