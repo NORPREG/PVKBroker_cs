@@ -4,9 +4,9 @@ using System.Linq;
 using Microsoft.EntityFrameworkCore;
 using Moq;
 using NUnit.Framework;
+using PvkBroker.Kodeliste.Encryption;
 
 // FRA LLM, se NØYE gjennom før jeg kjører
-// Endre cryptohelper til Encryption.Encrypt og Decrypt
 
 public class ReservationComparerTests
 {
@@ -22,13 +22,13 @@ public class ReservationComparerTests
             {
                 fk_patient_key = 1,
                 event_time = DateTime.UtcNow.AddHours(-1),
-                is_reserved_aes = CryptoHelper.Encrypt("false")
+                is_reserved_aes = Encrypt("false")
             },
             new PvkEvent
             {
                 fk_patient_key = 2,
                 event_time = DateTime.UtcNow.AddHours(-1),
-                is_reserved_aes = CryptoHelper.Encrypt("true")
+                is_reserved_aes = Encrypt("true")
             }
         };
 
@@ -61,7 +61,6 @@ public class ReservationComparerTests
     }
 }
 
-// Støtteklasser og dummy-implementeringer for testformål
 public class PatientReservation
 {
     public int PatientKey { get; set; }

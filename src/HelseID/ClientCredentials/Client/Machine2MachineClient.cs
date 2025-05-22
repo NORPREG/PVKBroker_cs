@@ -4,10 +4,8 @@ using System.Text;
 // FROM DLL
 using HelseId.Samples.Common.Interfaces.PayloadClaimsCreators;
 using HelseId.Samples.Common.Interfaces.TokenExpiration;
-// using HelseId.Samples.Common.Interfaces.TokenRequests;
+using HelseId.Samples.Common.Interfaces.TokenRequests;
 using HelseId.Samples.Common.Models;
-
-using PvkBroker.HelseId.CommonExtended.Interfaces.TokenRequests;
 
 using Serilog;
 using PvkBroker.Configuration;
@@ -20,7 +18,6 @@ public class Machine2MachineClient
     private ITokenRequestBuilder _tokenRequestBuilder;
     // private IApiConsumer _apiConsumer;
     private ClientCredentialsTokenRequestParameters _tokenRequestParameters;
-    private bool _clientCredentialsUseDpop;
     private IExpirationTimeCalculator _expirationTimeCalculator;
     private DateTime _persistedAccessTokenExpiresAt = DateTime.MinValue; // cache this to disk
     private string _persistedAccessToken = string.Empty; // cache this to disk
@@ -32,14 +29,12 @@ public class Machine2MachineClient
         ITokenRequestBuilder tokenRequestBuilder,
         IExpirationTimeCalculator expirationTimeCalculator,
         IPayloadClaimsCreatorForClientAssertion payloadClaimsCreatorForClientAssertion,
-        ClientCredentialsTokenRequestParameters tokenRequestParameters,
-        bool clientCredentialsUseDpop)
+        ClientCredentialsTokenRequestParameters tokenRequestParameters)
     {
         _tokenRequestBuilder = tokenRequestBuilder;
         _expirationTimeCalculator = expirationTimeCalculator;
         _payloadClaimsCreatorForClientAssertion = payloadClaimsCreatorForClientAssertion;
         _tokenRequestParameters = tokenRequestParameters;
-        _clientCredentialsUseDpop = clientCredentialsUseDpop;
         request = null;
     }
 
@@ -81,25 +76,16 @@ public class Machine2MachineClient
     {
         // The request to HelseID is created:
 
-        if (_clientCredentialsUseDpop) {
-            // Original function from HelseID DLL library
-            request = await _tokenRequestBuilder.CreateClientCredentialsTokenRequest(
-                _payloadClaimsCreatorForClientAssertion,
-                _tokenRequestParameters,
-                null);
-        }
-        else {
-            // Extended function to create the request with Bearer token and not DPoP
-            request = await _tokenRequestBuilder.CreateClientCredentialsBearerTokenRequest(
-                _payloadClaimsCreatorForClientAssertion, 
-                _tokenRequestParameters);
-        }
+        request = await _tokenRequestBuilder.CreateClientCredentialsTokenRequest(
+            _payloadClaimsCreatorForClientAssertion,
+            _tokenRequestParameters,
+            null);
         
         // InspectRequest(request);
 
         var tokenResponse = await httpClient.RequestClientCredentialsTokenAsync(request);
 
-        if (_clientCredentialsUseDpop && tokenResponse.IsError && tokenResponse.Error == "use_dpop_nonce" && !string.IsNullOrEmpty(tokenResponse.DPoPNonce))
+        if (tokenResponse.IsError && tokenResponse.Error == "use_dpop_nonce" && !string.IsNullOrEmpty(tokenResponse.DPoPNonce))
         {
             request = await _tokenRequestBuilder.CreateClientCredentialsTokenRequest(_payloadClaimsCreatorForClientAssertion, _tokenRequestParameters, tokenResponse.DPoPNonce);
             tokenResponse = await httpClient.RequestClientCredentialsTokenAsync(request);
@@ -122,10 +108,4 @@ public class Machine2MachineClient
         Console.WriteLine("------");
     }
 
-    private static void WriteAccessTokenFromTokenResult(TokenResponse tokenResponse) {
-        Console.WriteLine("The application received this access token from HelseID:");
-        Console.WriteLine(tokenResponse.AccessToken);
-        Console.WriteLine("Copy/paste the access token string at https://jwt.ms to see the contents");
-        Console.WriteLine("------");
-    }
 }

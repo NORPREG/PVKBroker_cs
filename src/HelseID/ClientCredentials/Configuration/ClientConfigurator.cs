@@ -1,14 +1,12 @@
 // FROM DLL
-// using HelseId.Samples.Common.TokenRequests;
-using PvkBroker.HelseId.CommonExtended.TokenRequests;   
+using HelseId.Samples.Common.TokenRequests;
 using HelseId.Samples.Common.ApiConsumers;
 using HelseId.Samples.Common.ClientAssertions;
 using HelseId.Samples.Common.Configuration;
 using HelseId.Samples.Common.Endpoints;
 using HelseId.Samples.Common.Interfaces.Endpoints;
 using HelseId.Samples.Common.Interfaces.PayloadClaimsCreators;
-// using HelseId.Samples.Common.Interfaces.TokenRequests;
-using PvkBroker.HelseId.CommonExtended.Interfaces.TokenRequests;
+using HelseId.Samples.Common.Interfaces.TokenRequests;
 using HelseId.Samples.Common.JwtTokens;
 using HelseId.Samples.Common.Models;
 using HelseId.Samples.Common.PayloadClaimsCreators;
@@ -37,14 +35,12 @@ public class ClientConfigurator
         var expirationTimeCalculator = new ExpirationTimeCalculator(new DateTimeService());
         var payloadClaimsCreator = SetUpPayloadClaimsCreator();
         var dPoPProofCreator = new DPoPProofCreator(configuration);
-        bool clientCredentialsUseDpop = ConfigurationValues.ClientCredentialsUseDpop;
 
         return new Machine2MachineClient(
             tokenRequestBuilder,
             expirationTimeCalculator,
             payloadClaimsCreator,
-            tokenRequestParameters,
-            clientCredentialsUseDpop);
+            tokenRequestParameters);
     }
 
     private static ITokenRequestBuilder CreateTokenRequestBuilder(HelseIdConfiguration configuration, IHelseIdEndpointsDiscoverer endpointsDiscoverer)

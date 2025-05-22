@@ -82,6 +82,7 @@ public static class ConfigurationValues
 
     public const string TestPvkPartKode = "prostraa";
     public const string ProdPvkPartKode = "prostraa";
+
     public static string PvkPartKode = environment == "test" ? TestPvkPartKode : ProdPvkPartKode;
 
     // MySQL database connection string
@@ -92,12 +93,27 @@ public static class ConfigurationValues
     public static string KodelisteUsername = Environment.GetEnvironmentVariable("KodelisteUsername"); // "cs";
     public static string KodelistePassword = Environment.GetEnvironmentVariable("KodelistePassword"); // "InitializeComponent547";
 
+    string targetUrl = ConfigurationValues.RedcapNorpregUrl;
+    string targetApiToken = ConfigurationValues.RedcapApiToken.RedcapApiToken["NORPREG"];
+
+    public static readonly Dictionary<string, string> RedcapApiToken = new()
+    {
+        { "NORPREG", Environment.GetEnvironmentVariable("RedcapNorpregApiToken") },
+        { "KREST-OUS", Environment.GetEnvironmentVariable("RedcapKrestOusApiToken") },
+        { "KREST-HUS", Environment.GetEnvironmentVariable("RedcapKrestHusApiToken") }
+    };
+
+    public static readonly RedcapNorpregUrl = "redcap.helse-nord.no/api/";
+    public static readonly RedcapKrestOusUrl = "redcap.helse-bergen.no/api/";
+    public static readonly RedcapKrestHusUrl = "redcap.helse-bergen.no/api/";
+
+
     // -----------------------------------------------------------------------------------------------------------------
     // Client scopes:
     // -----------------------------------------------------------------------------------------------------------------
 
-    // Sets both the client credential scope (for claims that the PvkApi HelseId API needs)
-    // and the client info scope for use against the client info endpoint:
+        // Sets both the client credential scope (for claims that the PvkApi HelseId API needs)
+        // and the client info scope for use against the client info endpoint:
 
     public const string PvkApiScope = $"{ApiForPvkReadScope} {ApiForPvkWriteScope}"; // use this
 
