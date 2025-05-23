@@ -23,18 +23,15 @@ namespace PvkBroker.Pvk.ApiCaller;
 public class PvkCaller
 {
     private readonly IDPoPProofCreator? _idPoPProofCreator;
-    private readonly HelseIdConfiguration _configuration;
+    private readonly HelseIdConfiguration HelseIdConfigurationValues;
     private static HttpClient _httpClient;
+    private readonly Kodeliste _kodeliste;
 
-    public PvkCaller() {
-        _configuration = SetUpHelseIdConfiguration();
+    public PvkCaller(Kodeliste kodeliste) {
+        HelseIdConfigurationValues = SetUpHelseIdConfiguration();
         _httpClient = new HttpClient();
-        
-        if (ConfigurationValues.ClientCredentialsUseDpop == true)
-        {
-            _idPoPProofCreator = new DPoPProofCreator(_configuration);
-        }
-
+        _kodeliste = kodeliste;
+        _idPoPProofCreator = new DPoPProofCreator(HelseIdConfigurationValues);
     }
 
     public HttpRequestMessage GetBaseRequestParameters(string accessToken, string url, string httpMethod)
@@ -47,30 +44,19 @@ public class PvkCaller
         {
             request = new HttpRequestMessage(HttpMethod.Get, url);
         }
-        else if (httpMethod == "POST")
+        else 
         {
             request = new HttpRequestMessage(HttpMethod.Post, url);
         }
-        else
-        {
-            throw new ArgumentException("Invalid HTTP method specified. Use 'GET' or 'POST'.");
-        }
 
         // Set DPoP or Bearer token
-        if (ConfigurationValues.ClientCredentialsUseDpop == true)
-        {
-            var dPopProof = _idPoPProofCreator.CreateDPoPProof(url, "GET", accessToken: accessToken);
-            request.SetDPoPToken(accessToken, dPopProof);
-        }
-
-        else
-        {
-            request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
-        }
+        var dPopProof = _idPoPProofCreator.CreateDPoPProof(url, "GET", accessToken: accessToken);
+        request.SetDPoPToken(accessToken, dPopProof);
 
         return request;
      }
 
+    // Inactive
     public async Task<string?> CallApiSjekkInnbyggersPiStatus(string fnr, string accessToken, int pagingReference = 0)
     {
         var url = ConfigurationValues.PvkSystemUrl + ConfigurationValues.PvkSjekkInnbyggersPiStatusUrl;
@@ -93,6 +79,7 @@ public class PvkCaller
         return response;
     }
 
+    // Inactive
     public async Task<string?> CallApiHentInnbyggersForPart(string fnr, string accessToken, int pagingReference = 0)
     {
         var url = ConfigurationValues.PvkSystemUrl + ConfigurationValues.PvkHentInnbyggersPiForPartUrl;
@@ -113,7 +100,8 @@ public class PvkCaller
         return response;
     }
 
-    public async Task<string?> CallApiHentInnbyggereAktivePiForDefinisjon(string accessToken, int pagingReference = 0)
+    // Active
+    public async Task<ApiResponseHentInnbyggere?> CallApiHentInnbyggereAktivePiForDefinisjon(string accessToken, int pagingReference = 0)
      {
         var query = new Dictionary<string, string>
         {
@@ -130,7 +118,14 @@ public class PvkCaller
 
         var response = await SendRequestAndHandleResponse(request);
 
-        return response;
+        return JsonSerializer.Deserialize<ApiResponseHentInnbyggere>(
+            responseBody,
+            new JsonSerializerOptions
+            {
+                PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+            });
+
+        // return response;
 }
 
     private static HelseIdConfiguration SetUpHelseIdConfiguration()
@@ -212,14 +207,22 @@ public class PvkCaller
             Log.Error("Error in PVK HTTP response: {@response}", response);
             return null;
         }
+    }
 
-        /* Consider this
-        return JsonSerializer.Deserialize<ApiResponseHentInnbyggere>(
-            responseBody,
-            new JsonSerializerOptions
+    public static List<SimplePvkEvent> ParseResponse(ApiResponseModel apiResponse)
+    {
+        var pvkEvents = new List<SimplePvkEvent>();
+        foreach (var eventItem in apiResponse.personvernInnstillinger)
+        {
+            var simpleEvent = new SimplePvkEvent
             {
-                PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
-            });
-        */
+                PatientID = eventItem.innbyggerFnr,
+                PatientKey = _kodeliste.GetPatientKey(PatientID),
+                EventTime = eventItem.sistEndretTidspunkt,
+                IsReserved = "1"
+            };
+            pvkEvents.Add(simpleEvent);
+        }
+        return pvkEvents;
     }
 }

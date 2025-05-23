@@ -1,7 +1,7 @@
 using PvkBroker.Configuration;
 using Serilog;
 
-namespace PvkBroker.Pvk.ApiCaller;
+namespace PvkBroker.Pvk.TokenCaller;
 
 public class CachedToken
 {

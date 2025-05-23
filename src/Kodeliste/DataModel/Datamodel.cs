@@ -12,17 +12,17 @@ namespace PvkBroker.Kodeliste
     {
         public int id { get; set; }
         public string name { get; set; } // KREST-XXX, NORPREG
-        public List<Patient> patients { get; set; } // list of patients in this registry
+        public List<Patient> patients { get; set; } // list of patients in this registry. Not for NORPREG, that'd need more modelling (many-to-many)
         public List<RegistryExport> registry_exports { get; set; } // registry export
     }
 
     public class Patient
     {
-        public int patient_key { get; set; } // registry-wide pseudonymization key for the patient
+        public string patient_key { get; set; } // registry-wide pseudonymization key for the patient
         public DateTime dt_added { get; set; } // datetime added to the registry
 
         public int fk_registry_id { get; set; } // foreign key to the registry
-        public Registry registry { get; set; }
+        public Registry registry { get; set; } // registry this patient belongs to originally (KREST)
 
         public List<PatientID> patient_ids { get; set; } // list of patient IDs
         public List<Address> addresses { get; set; } // list of addresses
@@ -40,17 +40,17 @@ namespace PvkBroker.Kodeliste
     {
         public int id { get; set; }
         public Patient patient { get; set; }
-        public int fk_patient_key { get; set; } // foreign key to the patient
+        public string fk_patient_key { get; set; } // foreign key to the patient
         public DateTime dt_added { get; set; } // datetime added to the registry
         public string fnr_aes { get; set; } // encrypted fnr
-        public string fnr_type { get; set; }
+        public string fnr_type { get; set; } // patient ID type
     }
 
     public class Address
     {
         public int id { get; set; }
         public DateTime dt_added { get; set; } // date added to the registry
-        public int fk_patient_key { get; set; } // foreign key to the patient
+        public string fk_patient_key { get; set; } // foreign key to the patient
         public Patient patient { get; set; }
 
         public string zip_code_aes { get; set; } // encrypted zip code
@@ -62,7 +62,7 @@ namespace PvkBroker.Kodeliste
     {
         public int id { get; set; }
         public DateTime dt_added { get; set; } // datetime added to the registry
-        public int fk_patient_key { get; set; } // foreign key to the patient
+        public string fk_patient_key { get; set; } // foreign key to the patient
         public Patient patient { get; set; }
         public List<PatientExport> patient_exports { get; set; } // list of patient exports
         public int fk_datastatus_id { get; set; } // foreign key to the data status
@@ -102,7 +102,7 @@ namespace PvkBroker.Kodeliste
     public class PatientExport // many-to-many collection of patients with primary definition of pseudo keys for a given export action
     {
         public int id { get; set; }
-        public int fk_patient_key { get; set; } // foreign key to the patient
+        public string fk_patient_key { get; set; } // foreign key to the patient
         public Patient patient { get; set; }
         public int fk_course_id { get; set; } // foreign key to the course
         public Course course { get; set; }
@@ -135,19 +135,20 @@ namespace PvkBroker.Kodeliste
     {
         public int id { get; set; }
         public DateTime event_time { get; set; }
-        public int fk_patient_key { get; set; } // foreign key to the patient
+        public string fk_patient_key { get; set; } // foreign key to the patient
         public Patient patient { get; set; }
         public int fk_sync_id { get; set; } // foreign key to the sync
         public PvkSync pvk_sync { get; set; }
-        public bool is_reserved_aes { get; set; } // encrypted reservation status
-     }
+        public bool is_reserved_aes { get; set; } // encrypted reservation status ("1" = reserved, "0" = not reserved)
+    }
 
-     public class PvkSync
-     {
-          public int id { get; set; }
-          public List<PvkEvent> pvk_events { get; set }
-          public DateTime dt_sync { get; set; } // datetime of the last sync
-          public int new_reservations { get; set; } // status of the sync
-          public int new_reservation_removals { get; set; } // status of the sync
-          public string error_message { get; set; } // error message if any
-     }
+    public class PvkSync
+    {
+        public int id { get; set; }
+        public List<PvkEvent> pvk_events { get; set }
+        public DateTime dt_sync { get; set; } // datetime of the last sync
+        public int new_reservations { get; set; } // status of the sync
+        public int withdrawn_reservations { get; set; } // status of the sync
+        public string error_message { get; set; } // error message if any
+    }
+}

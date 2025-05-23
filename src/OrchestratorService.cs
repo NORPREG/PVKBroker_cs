@@ -5,60 +5,85 @@ using System.Threading.Tasks;
 using Serilog;
 
 using PvkBroker.Configuration;
-using PvkBroker.Pvk;
+using PvkBroker.Pvk.ApiCaller;
+using PvkBroker.Pvk.TokenCaller;
 using PvkBroker.Kodeliste;
 using PvkBroker.Redcap;
+using PvkBroker.Tools;
 
 public class OrchestratorService : BackgroundService
 {
-    private readonly Configuration _configuration;
     private readonly PvkCaller _pvkCaller;
-    private readonly Kodeliste _kodeliste;
-    private readonly Redcap _redcap;
+    private readonly KodelisteInterface _kodeliste;
+    private readonly RedcapInterface _redcap;
+    private readonly AccessTokenCaller _accessTokenCaller;
+    private readonly Encryption _encryption;
+    private readonly Orchestrations _orchestration;
 
     private Timer? _timer;
 
-    public OrchestratorService(Configuration configuration, PvkCaller pvkCaller, Kodeliste kodeliste, Redcap redcap)
+    public OrchestratorService(
+        PvkCaller pvkCaller,
+        AccessTokenCaller accessTokenCaller,
+        KodelisteInterface kodelisteInterface,
+        RedcapInterface redcapInterface,
+        Encryption encryption,
+        Orchestrations orchistrations
+    )
+
     {
-        _configuration = configuration;
         _pvkCaller = pvkCaller;
-        _kodeliste = kodeliste;
-        _redcap = redcap;
+        _accessTokenCaller = accessTokenCaller;
+        _kodeliste = kodelisteInterface;
+        _redcap = redcapInterface;
+        _encryption = encryption;
+        _orchestration = orchistrations;
+
+        SetupLogging.Initialize();
     }
 
-    protected overried Task ExecuteAsync(CancellationToken stoppingToken)
+    protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
-        Log.Information("Starting OrchestratorService...");
-        // Set up a timer to call the Pvk API every day
-        _timer = new Timer(DoWork, null, TimeSpan.Zero, TimeSpan.FromDays(1));
-        return Task.CompletedTask;
+        Log.Information("Starting PvkBroker OrchestratorService...");
+
+        var timer = new PeriodicTimer(TimeSpan.FromHours(ConfigurationValues.PvkSyncTimeInHours));
+
+        do
+        {
+            await DoWorkAsync();
+        }
+
+        while (await timer.WaitForNextTickAsync(stoppingToken));
     }
 
-    private void DoWork(object? state)
+    private async Task DoWorkAsync()
     {
         try
         {
-            Log.Information("OrchestratorService is doing work...");
+            int numberOfCalls = 1;
+            while (numberOfCalls != 0) {
 
-            // Pack the business logic loop into another function?
+                List<SimplePvkEvent> newPvkEvents = _orchestrator.CallPvkAndParseResponse();
 
-            // Call the Pvk API
-            var pvkData = _pvkCaller.GetPvkData();
-            // Process the data with Kodeliste
-            var processedData = _kodeliste.ProcessData(pvkData);
+                // Get reservations from Kodeliste database BEFORE newest sync
+                var reservationDelta = _orchestration.CompareCurrentReservationWithNewPvkEvents(patientReservations, newPvkEvents);
 
-            foreach (var patient in processedData)
-            {
-                var patientKey = _kodeliste.GetPatientKey(patient);
-                var registerNavn = _kodeliste.GetRegisterKey(patient);
-                _redcap.ExportAndImport(patientKey, registerNavn);
+                // Make row in PvkSync table, get index for linking PvkEvent rows
+                string pvkSyncId = _kodeliste.CreatePvkSync(reservationDelta);
+
+                await _orchestration.HandleNewReservations(reservationDelta.NewReservations, pvkSyncId);
+                await _orchestration.HandleWithdrawnReservations(reservationDelta.WithdrawnReservations, pvkSyncId)
+
+                numberOfCalls = pvkApiResponse.pagingReference;
             }
-            
+
+            _orchestration.HandleNewPatients();
+
             Log.Information("OrchestratorService completed work successfully.");
         }
         catch (Exception ex)
         {
-            Log.Error(ex, "An error occurred in OrchestratorService: {@ex}", ex);
+            Log.Error(ex, "An unknown error occurred in OrchestratorService: {@ex}", ex);
         }
     }
 
@@ -68,5 +93,4 @@ public class OrchestratorService : BackgroundService
         _timer?.Change(Timeout.Infinite, 0);
         return base.StopAsync(cancellationToken);
     }
-
 }

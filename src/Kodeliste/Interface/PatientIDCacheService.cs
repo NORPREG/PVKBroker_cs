@@ -8,19 +8,21 @@ using Serilog;
 // 1M rows 10 - 40 s
 // I guess will be below 30 s which is OK for our usage (1/day) with caching
 
+
 namespace PvkBroker.Kodeliste
 {
-    public class PatientIDClassService
+    public class PatientIDCacheService
     {
-    private readonly Dictionary<string, List<PatientID>> _fnrToPatientIdMap = new();
+        private readonly Dictionary<string, List<PatientID>> _fnrToPatientIdMap = new();
 
-        public PatientIDClassService(KodelisteDbContext DbContext)
+        public PatientIDCacheService(KodelisteDbContext DbContext)
         {
             LoadCache(DbContext);
         }
 
         private void LoadCache(KodelisteDbContext dbContext)
         {
+            var watch = System.Diagnostics.Stopwatch.StartNew();
             var allPatientIds = dbContext.PatientIDs.AsNoTracking().ToList();
 
             foreach (var id in allPatientIds)
@@ -34,6 +36,8 @@ namespace PvkBroker.Kodeliste
                         continue;
                     }
 
+                    // Patient has single key but may have several PatientIDs
+                    // with same fk_patient_key (F, D, H numbers)
                     if (!_fnrToPatientIdMap.TryGetValue(decryptedFnr, out var list))
                     {
                         list = new List<PatientID>();
@@ -42,6 +46,10 @@ namespace PvkBroker.Kodeliste
                     list.Add(id);
                 }
             }
+            
+            watch.Stop();
+            var elapsedMs = watch.ElapsedMilliseconds;
+            Log.Information("Loaded {count} encrypted PatientIDs in {elapsedMs} ms", allPatientIds.Count, elapsedMs);
         }
 
         public IEnumerable<PatientID> GetPatientIdsByFnr(string fnr)
@@ -54,3 +62,29 @@ namespace PvkBroker.Kodeliste
         }
     }
 }
+
+/* Suggestion for parallelzed run:
+ 
+ var allPatientIds = await dbContext.PatientIDs.AsNoTracking().ToListAsync();
+
+var dict = new ConcurrentDictionary<string, List<PatientID>>();
+
+Parallel.ForEach(allPatientIds, id =>
+{
+    try
+    {
+        var decryptedFnr = Encryption.Decrypt(id.fnr_aes);
+        if (string.IsNullOrEmpty(decryptedFnr)) { return; }
+
+        dict.AddOrUpdate(decryptedFnr,
+            _ => new List<PatientID> { id },
+            (_, list) => { lock(list) { list.Add(id); } return list; });
+    }
+    catch (Exception ex)
+    {
+        Log.Error(ex, "Feil under dekryptering for PatientID {@id}", id);
+    }
+});
+
+_fnrToPatientIdMap = dict.ToDictionary(kvp => kvp.Key, kvp => kvp.Value);
+*/

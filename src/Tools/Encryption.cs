@@ -7,11 +7,58 @@ using Serilog;
 
 // TODO
 // Change to prepended IV in string and not key. iv_b64 : cipher_b64
+// Key length needs to be 16, 24 or 32 bytes for AES-128/192/256
 
-namespace PvkBroker.Kodeliste
+namespace PvkBroker.Tools
 {
     public class Encryption
     {
+        public static string Decrypt(string ivCipher, byte[] key)
+        {
+            var parts = ivCipher.Split(':');
+            if (parts.Length != 2)
+                throw new ArgumentException("ivCipher må være på formatet 'iv:cipher'");
+
+            byte[] iv = Convert.FromBase64String(parts[0]);
+            byte[] cipherText = Convert.FromBase64String(parts[1]);
+
+            using var aes = Aes.Create();
+            aes.Key = key;
+            aes.IV = iv;
+            aes.Padding = PaddingMode.PKCS7;
+            aes.Mode = CipherMode.CBC;
+
+            using var decryptor = aes.CreateDecryptor();
+            using var ms = new MemoryStream(cipherText);
+            using var cs = new CryptoStream(ms, decryptor, CryptoStreamMode.Read);
+            using var sr = new StreamReader(cs);
+            return sr.ReadToEnd();
+        }
+
+        public static string Encrypt(string plaintext, byte[] key)
+        {
+            using var aes = Aes.Create();
+            aes.Key = key;
+            aes.GenerateIV();
+            aes.Padding = PaddingMode.PKCS7;
+            aes.Mode = CipherMode.CBC;
+
+            using var encryptor = aes.CreateEncryptor();
+            using var ms = new MemoryStream();
+            using (var cs = new CryptoStream(ms, encryptor, CryptoStreamMode.Write))
+            using (var sw = new StreamWriter(cs))
+            {
+                sw.Write(plaintext);
+            }
+
+            string ivBase64 = Convert.ToBase64String(aes.IV);
+            string cipherBase64 = Convert.ToBase64String(ms.ToArray());
+            return $"{ivBase64}:{cipherBase64}";
+        }
+
+        // Old functions below for constant IV, not recommended
+        // Need to change the same method in DICOM Broker as well
+
         static public string DecryptWithHashKey(string encryptedB64, string key)
         {
             // Generate SHA-256 hash of the key
@@ -100,30 +147,3 @@ namespace PvkBroker.Kodeliste
         }
     }
 }
-
-// Code example where the IV is declared in the string iv_base64:cipher_base64
-// This looks a LOT better than my code from above where PKCS7 is explicitly modeled
-
-/*
-public static string DecryptAesColonSeparated(string fnrAes, byte[] key)
-{
-    var parts = fnrAes.Split(':');
-    if (parts.Length != 2)
-        throw new ArgumentException("fnrAes må være på formatet 'iv:cipher'");
-
-    byte[] iv = Convert.FromBase64String(parts[0]);
-    byte[] cipherText = Convert.FromBase64String(parts[1]);
-
-    using var aes = Aes.Create();
-    aes.Key = key;
-    aes.IV = iv;
-    aes.Padding = PaddingMode.PKCS7;
-    aes.Mode = CipherMode.CBC;
-
-    using var decryptor = aes.CreateDecryptor();
-    using var ms = new MemoryStream(cipherText);
-    using var cs = new CryptoStream(ms, decryptor, CryptoStreamMode.Read);
-    using var sr = new StreamReader(cs);
-    return sr.ReadToEnd();
-}
-*/

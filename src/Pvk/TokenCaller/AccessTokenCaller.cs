@@ -20,7 +20,7 @@ using Serilog;
 using System.Reflection.Metadata.Ecma335;
 
 
-namespace PvkBroker.Pvk.ApiCaller;
+namespace PvkBroker.Pvk.TokenCaller;
 
 public class AccessTokenCaller
 {

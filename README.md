@@ -13,6 +13,7 @@ The main goals of this repo are:
 * Pseudonymize the data by removing directly identifiable inforamtion, and add a pseudonymized index from Kodelisten
 * Push the JSON data object of the patient to the national REDCap using REST API.
 
+## Some documentation below for the PYTHON version of the project, update this for the C# version
 A few definitions:
 * `definisjonGuid`: The ID of a specific consent question. Several consent questions can be included in a project. The type of a `definisjonGuid` can be both consent, reservation and sperre (for innsyn). In test, the `definisjonGuid` for "Samtykke 1" is `2c11f0ca-7270-43f1-a473-bac325feb3f6`.
 * `definisjonNavn`: The friendly name of the specific consent question at Helse Norge. In test it is `Proton- og stråleregister samtykke`.

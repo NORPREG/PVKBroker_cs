@@ -10,16 +10,10 @@ using Serilog;
 
 namespace PvkBroker.Redcap
 {
-    class RedcapTransfer
+    class RedcapInterface
     {
         static async Task ExportAndImportAsync(string registerNavn, string recordId)
         {
-            if (args.Length == 0)
-            {
-                Log.Error("No register name provided.");
-                return;
-            }
-
             if (!ConfigurationValues.RedcapApiTokens.TryGetValue(registerNavn, out var sourceApiToken))
             {
                 Log.Error($"Register '{registerNavn}' not found in configuration.");
@@ -38,7 +32,7 @@ namespace PvkBroker.Redcap
             {
                 new KeyValuePair<string, string>("token", sourceApiToken),
                 new KeyValuePair<string, string>("content", "record"),
-                new KeyValuePair<string, string>("action", "export"), // trenger jeg denne?
+                new KeyValuePair<string, string>("action", "export"),
                 new KeyValuePair<string, string>("format", "json"),
                 new KeyValuePair<string, string>("type", "flat"),
                 new KeyValuePair<string, string>("records[0]", recordId)
@@ -111,6 +105,28 @@ namespace PvkBroker.Redcap
                 }
             }
             return recordIds;
+        }
+
+        static async Task RemovePatient(string recordId)
+        {
+            var httpClient = new HttpClient();
+            var url = ConfigurationValues.RedcapNorpregUrl;
+
+            var removeContent = new FormUrlEncodedContent(new[]
+            {
+                new KeyValuePair<string, string>("token", ConfigurationValues.RedcapApiToken["NORPREG"]),
+                new KeyValuePair<string, string>("content", "record"),
+                new KeyValuePair<string, string>("action", "delete"),
+                new KeyValuePair<string, string>("returnFormat", "json"),
+                new KeyValuePair<string, string>("records[0]", recordId)
+            });
+            var response = await httpClient.PostAsync(url, removeContent);
+            if (!response.IsSuccessStatusCode)
+            {
+                Log.Error($"Failed to delete data from {url}: {response.StatusCode}");
+                return;
+            }
+            Log.Info("Patient with record ID {recordId} removed successfully from {url}", recordId, url);
         }
     }
 }

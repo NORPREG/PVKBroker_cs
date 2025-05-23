@@ -17,23 +17,7 @@ namespace PvkBroker.Kodeliste
         public DbSet<PatientExport> PatientExports { get; set; }
         public DbSet<DataStatus> DataStatuses { get; set; }
 
-
         public KodelisteDbContext(DbContextOptions<KodelisteDbContext> options) : base(options) { }
-        public KodelisteDbContext() { }
-
-        protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
-        {
-            string Server = ConfigurationValues.KodelisteServer;
-            string DatabaseName = ConfigurationValues.KodelisteDbName;
-            string UserName = ConfigurationValues.KodelisteUsername;
-            string Password = ConfigurationValues.KodelistePassword;
-
-            if (string.IsNullOrEmpty(DatabaseName)) { return; }
-            string connstring = $"Server={Server};Database={DatabaseName};Trusted_Connection=True"; //  User Id={UserName};Password={Password}";
-
-            optionsBuilder.UseSqlServer(connstring);
-        }
-        s
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
