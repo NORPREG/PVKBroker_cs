@@ -95,6 +95,8 @@ public static class ConfigurationValues
     public static string KodelisteUsername = Environment.GetEnvironmentVariable("KodelisteUsername"); // "cs";
     public static string KodelistePassword = Environment.GetEnvironmentVariable("KodelistePassword"); // "InitializeComponent547";
 
+    public static string KodelisteAesKey = Environment.GetEnvironmentVarible("KodelisteAesKey");
+
     string targetUrl = ConfigurationValues.RedcapNorpregUrl;
     string targetApiToken = ConfigurationValues.RedcapApiToken.RedcapApiToken["NORPREG"];
 

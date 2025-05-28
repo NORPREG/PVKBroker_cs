@@ -14,10 +14,10 @@ using PvkBroker.HelseId.ClientCredentials.Configuration;
 using PvkBroker.Configuration;
 
 using SecurityKey = HelseId.Samples.Common.Configuration.SecurityKey;
+using MicrosoftKey = Microsoft.IdentityModel.Tokens.SecurityKey;
 using System;
 
 using Serilog;
-using System.Reflection.Metadata.Ecma335;
 
 
 namespace PvkBroker.Pvk.TokenCaller;
@@ -26,22 +26,28 @@ public class AccessTokenCaller
 {
     private ClientConfigurator _clientConfigurator;
     private Machine2MachineClient _client;
+    private readonly IHttpClientFactory _httpClientFactory;
 
-    public AccessTokenCaller()
+    public AccessTokenCaller(IHttpClientFactory httpClientFactory)
     {
+        _httpClientFactory = httpClientFactory;
         _clientConfigurator = new ClientConfigurator();
-        _client = _clientConfigurator.ConfigureClient();
     }
 
-    public async Task<string> GetAccessToken()
+    public async Task<string?> GetAccessToken()
     {
+        if (_client == null)
+        {
+            _client = _clientConfigurator.ConfigureClient();
+        }
+
         var cached = TokenCacher.GetFromCache();
         if (cached != null)
         {
             return cached.AccessToken;
         }
 
-        using var httpClient = new HttpClient();
+        var httpClient = _httpClientFactory.CreateClient();
         string accessToken = await _client.GetAccessToken(httpClient);
 
         if (string.IsNullOrEmpty(accessToken))
@@ -90,8 +96,7 @@ public class AccessTokenCaller
         }
     }
 
-    // Don't confuse this SecurityKey with the one in the HelseId.Samples.Common.Configuration namespace
-    private async Task<IEnumerable<Microsoft.IdentityModel.Tokens.SecurityKey>> GetSigningKeysAsync(string jwksUri)
+    private async Task<IEnumerable<MicrosoftKey>> GetSigningKeysAsync(string jwksUri)
     {
         var configManager = new Microsoft.IdentityModel.Protocols.ConfigurationManager<Microsoft.IdentityModel.Protocols.OpenIdConnect.OpenIdConnectConfiguration>(
             jwksUri,

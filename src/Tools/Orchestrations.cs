@@ -40,6 +40,7 @@ namespace PvkBroker.Tools
         }
 
         public async Task HandleNewReservations(List<SimplePvkEvent> newReservations, int pvkSyncId) { 
+            Log.Information("Found {NewReservations} new reservation events in PVK sync", newReservations.Count);
             foreach (SimplePvkEvent patient in newReservations)
             {
                 try {
@@ -57,6 +58,7 @@ namespace PvkBroker.Tools
         }
 
         public async Task HandleWithdrawnReservations(List<string> withdrawnReservations, int pvkSyncId) {
+            Log.Information("Found {WithdrawnReservations} withdrawn reservation events in PVK sync", withdrawnReservations.Count);
             foreach (var patientKey in withdrawnReservations)
             {
                 try
@@ -76,13 +78,13 @@ namespace PvkBroker.Tools
 
         public async Task HandleNewPatients()
         {
-
             var quarantinePeriod = DateTime.Now.AddDays(-ConfigurationValues.QuarantinePeriodInDays);
+            List<string> patientKeysInRedcap = new HashSet<string>(_redcap.GetAllRecordIdsAsync());
             List<PatientReservation> updatedPatientsReservations = _kodeliste.GetPatientReservations();
 
             foreach (var patient in updatedPatientsReservations)
             {
-                if (patient.IsReserved == "0" && patient.dt_added < quarantinePeriod)
+                if (!patient.IsReserved && patient.dt_added < quarantinePeriod && !patientKeysInRedcap.Contains(patient.PatientKey))
                 {
                     try
                     {
@@ -136,8 +138,7 @@ namespace PvkBroker.Tools
             string accessToken = await _accessTokenCaller.GetAccessToken();
             ClaimsPrincipal principal = await _accessTokenCaller.ValidateAccessTokenAsync(accessToken);
 
-            ApiResponseModel pvkApiResponse = await _pvkCaller.CallApiHentInnbyggereAktivePiForDefinisjon(accessToken);
-            List<SimplePvkEvent> newPvkEvents = _pvkCaller.ParseResponse(pvkApiResponse);
+            List<SimplePvkEvent> newPvkEvents = await _pvkCaller.CallApiHentInnbyggereAktivePiForDefinisjon(accessToken);
 
             return newPvkEvents;
         }

@@ -52,6 +52,17 @@ namespace PvkBroker.Kodeliste
             Log.Information("Loaded {count} encrypted PatientIDs in {elapsedMs} ms", allPatientIds.Count, elapsedMs);
         }
 
+        public void ReloadCache(KodelisteDbContext dbContext)
+        {
+            lock (_fnrToPatientIdMap)
+            {
+                _fnrToPatientIdMap.Clear();
+                LoadCache(dbContext);
+                Log.Information("PatientID cache reloaded successfully.");
+            }
+            
+        }
+
         public IEnumerable<PatientID> GetPatientIdsByFnr(string fnr)
         {
             if (_fnrToPatientIdMap.TryGetValue(fnr, out var patientIds))

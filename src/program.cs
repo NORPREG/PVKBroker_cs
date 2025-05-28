@@ -31,7 +31,6 @@ public class Program
                     options.UseMySql(connstring, ServerVesion.AutoDetect(connString));
                 });
 
-                services.AddSingleton<PvkBroker.Configuration.ConfigurationValues>();
                 services.AddSingleton<PvkBroker.Pvk.TokenCaller.AccessTokenCaller>();
                 services.AddSingleton<PvkBroker.Pvk.ApiCaller.PvkCaller>();
                 services.AddSingleton<PvkBroker.Kodeliste.KodelisteInterface>();
@@ -40,6 +39,7 @@ public class Program
                 services.AddSingleton<PvkBroker.Kodeliste.Encryption>();
                 services.AddSingleton<PvkBroker.Tools.Orchestrations>();
                 services.AddSingleton<PvkBroker.Kodeliste.PatientIDCacheService>();
+                services.AddHttpClient();
             })
              .Build()
              .Run();

@@ -39,11 +39,11 @@ namespace PvkBroker.Kodeliste
     }
 
     public class KodelisteInterface
-
+    {
         private readonly PatientIDCacheService cache;
         private readonly KodelisteDbContext _context;
 
-        private KodelisteInterface(KodelisteDbContext context, PatientIDCacheService cache)
+        public KodelisteInterface(KodelisteDbContext context, PatientIDCacheService cache)
         {
             _context = context;
             _cache = cache;
@@ -53,7 +53,8 @@ namespace PvkBroker.Kodeliste
         {
             var pastientReservations = new List<PatientReservation>();
 
-            var patients = _context.Patients
+            var patients = _context.Patient
+                .Where(p => p.pvk_events.Any())
                 .Include(p => p.pvk_events)
                 .ToList();
 
@@ -68,8 +69,7 @@ namespace PvkBroker.Kodeliste
                 {
                     try
                     {
-                        var isReservedDecrypted = Encryption.Decrypt(lastEvent.is_reserved_aes.ToString());
-                        isReserved = isReservedDecrypted; // "0" or "1"
+                        isReserved = Encryption.DecryptBool(lastEvent.is_reserved_aes.ToString());
                     }
                     catch (Exception ex)
                     {
@@ -87,10 +87,10 @@ namespace PvkBroker.Kodeliste
             return pastientReservations;
         }
 
-        public PatientReservation? GetPatientsReservation(string fnrInput)
+        public PatientReservation? GetPatientReservation(string fnrInput)
         {
             var matchingPatientIDs = _cache.GetPatientIdsByFnr(fnrInput);
-            if (matchingPatientIDs.Count() == 0)
+            if (!matchingPatientIDs.Any())
             {
                 Log.Info("No previous information found for patient in PVK");
                 return null;
@@ -101,7 +101,7 @@ namespace PvkBroker.Kodeliste
                 .Distinct()
                 .ToList();
 
-            var patients = _context.Patients
+            var patients = _context.Patient
                 .Include(p => p.pvk_events)
                 .Where(p => uniquePatientKeys.Contains(p.patient_key))
                 .ToList();
@@ -117,8 +117,7 @@ namespace PvkBroker.Kodeliste
                 {
                     try
                     {
-                        var isReservedDecrypted = Encryption.Decrypt(lastEvent.is_reserved_aes.ToString());
-                        isReserved = isReservedDecrypted; // "0" or "1" 
+                        bool isReserved = Encryption.DecryptBool(lastEvent.is_reserved_aes.ToString());
                     }
                     catch (Exception ex)
                     {
@@ -136,11 +135,11 @@ namespace PvkBroker.Kodeliste
             }
             return null;
         }
-        public AddPvkEvent(int patientKey, bool isReserved, int SyncId)
+        public void AddPvkEvent(int patientKey, bool isReserved, int SyncId)
         {
             try
             {
-                var is_reserved_aes = Encryption.Encrypt(isReserved.ToString());
+                var isReservedAes = Encryption.EncryptBool(isReserved);
                 var newEvent = new PvkEvent
                 {
                     fk_patient_key = patientKey,
@@ -203,7 +202,7 @@ namespace PvkBroker.Kodeliste
                     return null;
                 }
 
-                return patientIDs[0].fk_patient_key
+                return patientIDs[0].fk_patient_key;
             }
         }
 
@@ -226,7 +225,7 @@ namespace PvkBroker.Kodeliste
 
         public DateTime GetPatientAddedDate(string patientKey)
         {
-            var patient = _context.Patients
+            var patient = _context.Patient
                 .FirstOrDefault(p => p.patient_key == patientKey);
             if (patient == null)
             {
@@ -243,7 +242,7 @@ namespace PvkBroker.Kodeliste
                 var newEvent = new PvkEvent
                 {
                     fk_patient_key = eventObject.PatientKey,
-                    is_reserved_aes = Encryption.Encrypt(eventObject.IsReserved.ToString()), // "1" or "0"
+                    is_reserved_aes = Encryption.EncryptBool(eventObject.IsReserved)
                     event_time = eventObject.EventTime,
                     fk_sync_id = syncId
                 };
@@ -264,7 +263,7 @@ namespace PvkBroker.Kodeliste
                 var newEvent = new PvkEvent
                 {
                     fk_patient_key = patientKey,
-                    is_reserved_aes = Encryption.Encrypt("0"), // "1" or "0"
+                    is_reserved_aes = Encryption.EncryptBool(false),
                     event_time = DateTime.UtcNow.AddHours(-ConfigurationValues.PvkSyncTimeInHours / 2), // we don't know the time, so halfway between last sync
                     fk_sync_id = syncId
                 };
@@ -274,6 +273,19 @@ namespace PvkBroker.Kodeliste
             catch (Exception ex)
             {
                 Log.Error("Error adding PvkEvent for patient {patientKey}: {@ex}", patientKey, ex);
+                throw;
+            }
+        }
+
+        public void ReloadCache()
+        {
+            try
+            {
+                _cache.ReloadCache(_context);
+            }
+            catch (Exception ex)
+            {
+                Log.Error("Error reloading Kodeliste cache: {@ex}", ex);
                 throw;
             }
         }

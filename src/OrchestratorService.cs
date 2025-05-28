@@ -60,6 +60,9 @@ public class OrchestratorService : BackgroundService
     {
         try
         {
+
+            _kodeliste.ReloadCache();
+
             int numberOfCalls = 1;
             while (numberOfCalls != 0) {
 

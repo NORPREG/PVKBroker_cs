@@ -12,6 +12,13 @@ namespace PvkBroker.Redcap
 {
     class RedcapInterface
     {
+        private readonly IHttpClientFactory _httpClientFactory;
+
+        public RedcapInterface(IHttpClientFactory httpClientFactory)
+        {
+            _httpClientFactory = httpClientFactory;
+        }
+
         static async Task ExportAndImportAsync(string registerNavn, string recordId)
         {
             if (!ConfigurationValues.RedcapApiTokens.TryGetValue(registerNavn, out var sourceApiToken))
@@ -26,7 +33,7 @@ namespace PvkBroker.Redcap
             string targetUrl = ConfigurationValues.RedcapNorpregUrl;
             string targetApiToken = ConfigurationValues.RedcapApiToken.RedcapApiToken["NORPREG"];
 
-            var httpClient = new HttpClient();
+            var httpClient = _httpClientFactory.CreateClient();
 
             var fetchContent = new FormUrlEncodedContent(new[]
             {
@@ -73,7 +80,7 @@ namespace PvkBroker.Redcap
 
         static async Task<List<string>> GetAllRecordIdsAsync()
         {
-            var httpClient = new HttpClient();
+            var httpClient = _httpClientFactory.CreateClient();
             var url = ConfigurationValues.RedcapNorpregUrl;
 
             var fetchContent = new FormUrlEncodedContent(new[]
@@ -109,7 +116,7 @@ namespace PvkBroker.Redcap
 
         static async Task RemovePatient(string recordId)
         {
-            var httpClient = new HttpClient();
+            var httpClient = _httpClientFactory.CreateClient();
             var url = ConfigurationValues.RedcapNorpregUrl;
 
             var removeContent = new FormUrlEncodedContent(new[]

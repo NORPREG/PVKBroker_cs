@@ -5,6 +5,8 @@ using System.Linq;
 using System.Text;
 using Serilog;
 
+using PvkBroker.Configuration;
+
 // TODO
 // Change to prepended IV in string and not key. iv_b64 : cipher_b64
 // Key length needs to be 16, 24 or 32 bytes for AES-128/192/256
@@ -13,12 +15,13 @@ namespace PvkBroker.Tools
 {
     public class Encryption
     {
-        public static string Decrypt(string ivCipher, byte[] key)
+        public static string Decrypt(string ivCipher)
         {
             var parts = ivCipher.Split(':');
             if (parts.Length != 2)
                 throw new ArgumentException("ivCipher må være på formatet 'iv:cipher'");
 
+            byte[] key = ConfigurationValues.KodelisteAesKey;
             byte[] iv = Convert.FromBase64String(parts[0]);
             byte[] cipherText = Convert.FromBase64String(parts[1]);
 
@@ -35,8 +38,9 @@ namespace PvkBroker.Tools
             return sr.ReadToEnd();
         }
 
-        public static string Encrypt(string plaintext, byte[] key)
+        public static string Encrypt(string plaintext)
         {
+            byte[] key = ConfigurationValues.KodelisteAesKey;
             using var aes = Aes.Create();
             aes.Key = key;
             aes.GenerateIV();
@@ -54,6 +58,23 @@ namespace PvkBroker.Tools
             string ivBase64 = Convert.ToBase64String(aes.IV);
             string cipherBase64 = Convert.ToBase64String(ms.ToArray());
             return $"{ivBase64}:{cipherBase64}";
+        }
+
+        // To encrypt and decrypt is_reserved status
+        public static string EncryptBool(bool value, byte[] key)
+        {
+            // Convert boolean to string
+            string text = value ? "1" : "0";
+            // Encrypt the string
+            return Encrypt(text, key);
+        }
+
+        public static bool DecryptBool(string ivCipher, byte[] key)
+        {
+            // Decrypt the string
+            string decryptedText = Decrypt(ivCipher, key);
+            // Convert decrypted string back to boolean
+            return decryptedText == "1";
         }
 
         // Old functions below for constant IV, not recommended

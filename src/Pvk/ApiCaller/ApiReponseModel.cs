@@ -1,3 +1,7 @@
+using System.Text.Json;
+using System.Collections.Generic;
+using Serilog;
+
 namespace PvkBroker.Pvk.ApiCaller;
 
 // Model description at:
@@ -9,7 +13,7 @@ public class ApiResponseHentInnbyggere
 	public string? definisjonNavn { get; set; } // Reservasjon til Norsk proton- og stråleterapiregister
 	public string? partKode { get; set; } //  norpreg
 	public string? typePi { get; set; } // samtykke, reservasjon, tilgangsbegrensning
-	public Meta ReFasteMetadata { get; set; } // faste metedata for 
+	public ReFasteMetadata? reFasteMetadata { get; set; } // faste metedata for 
     public string? pagingReference { get; set; } // Dersom den har verdien 0, trenger det ikke å gjøres flere kall. Dersom annen verdi, må det gjøres etterfølgende kall med angitt pagingReference.
 
     public List<Pi>? personvernInnstillinger { get; set; }
@@ -25,7 +29,7 @@ public class Pi
 
 public class ReFasteMetadata
 {
-    public OmfangElementer ommfangElementer { get; set; } // GUID
+    public OmfangElementer? omfangElementer { get; set; } // GUID
 }
 
 public class OmfangElementer
@@ -40,6 +44,49 @@ public class SimplePvkEvent
 {
     public string PatientID { get; set; }
 	public string PatientKey { get; set; }
-	public string IsReserved { get; set; } // "0": Ikke reservert, "1": Reservert
+	public bool IsReserved { get; set; }
     public DateTime EventTime { get; set; }
+}
+
+public class ResponseParser
+{
+    public static ApiResponseHentInnbyggere ParseApiResponseHentInnbyggere(string responseBody)
+	{ 
+		var jsonOptions = new JsonSerializerOptions
+        {
+            PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+        };
+
+		if (string.IsNullOrEmpty(responseBody)) {
+            Log.Error("Received empty response body from API.");
+            return null;
+        }
+
+		try {
+			return parsedResponse = JsonSerializer.Deserialize<ApiResponseHentInnbyggere>(
+	            responseBody,
+				jsonOptions);
+			
+		catch (JsonException ex) {
+            Log.Error("Error deserializing API response: {@ex}", ex);
+            return null;
+        }
+    }
+
+    public static List<SimplePvkEvent> ParseResponse(ApiResponseModel apiResponse)
+    {
+        var pvkEvents = new List<SimplePvkEvent>();
+        foreach (var eventItem in apiResponse.personvernInnstillinger)
+        {
+            var simpleEvent = new SimplePvkEvent
+            {
+                PatientID = eventItem.innbyggerFnr,
+                PatientKey = _kodeliste.GetPatientKey(eventItem.innbyggerFnr),
+                EventTime = eventItem.sistEndretTidspunkt,
+                IsReserved = true
+            };
+            pvkEvents.Add(simpleEvent);
+        }
+        return pvkEvents;
+    }
 }
