@@ -133,7 +133,7 @@ namespace PvkBroker.Tools
             return reservationDelta;
         }
 
-        public async Task<List<SimplePvkEvent>> CallPvkAndParseResponse()
+        public async Task<List<SimplePvkEvent>> CallPvkAndParseResponse(int pagingReference? = null)
         {
             string accessToken = await _accessTokenCaller.GetAccessToken();
             ClaimsPrincipal principal = await _accessTokenCaller.ValidateAccessTokenAsync(accessToken);

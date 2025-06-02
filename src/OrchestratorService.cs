@@ -60,27 +60,19 @@ public class OrchestratorService : BackgroundService
     {
         try
         {
-
             _kodeliste.ReloadCache();
 
-            int numberOfCalls = 1;
-            while (numberOfCalls != 0) {
+            List<SimplePvkEvent> newPvkEvents = _orchestrator.CallPvkAndParseResponse();
 
-                List<SimplePvkEvent> newPvkEvents = _orchestrator.CallPvkAndParseResponse();
+            // Get reservations from Kodeliste database BEFORE newest sync
+            var reservationDelta = _orchestration.CompareCurrentReservationWithNewPvkEvents(patientReservations, newPvkEvents);
 
-                // Get reservations from Kodeliste database BEFORE newest sync
-                var reservationDelta = _orchestration.CompareCurrentReservationWithNewPvkEvents(patientReservations, newPvkEvents);
+            // Make row in PvkSync table, get index for linking PvkEvent rows
+            string pvkSyncId = _kodeliste.CreatePvkSync(reservationDelta);
 
-                // Make row in PvkSync table, get index for linking PvkEvent rows
-                string pvkSyncId = _kodeliste.CreatePvkSync(reservationDelta);
-
-                await _orchestration.HandleNewReservations(reservationDelta.NewReservations, pvkSyncId);
-                await _orchestration.HandleWithdrawnReservations(reservationDelta.WithdrawnReservations, pvkSyncId)
-
-                numberOfCalls = pvkApiResponse.pagingReference;
-            }
-
-            _orchestration.HandleNewPatients();
+            await _orchestration.HandleNewReservations(reservationDelta.NewReservations, pvkSyncId);
+            await _orchestration.HandleWithdrawnReservations(reservationDelta.WithdrawnReservations, pvkSyncId)
+            await _orchestration.HandleNewPatients();
 
             Log.Information("OrchestratorService completed work successfully.");
         }

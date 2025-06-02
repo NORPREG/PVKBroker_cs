@@ -27,8 +27,8 @@ namespace PvkBroker.Redcap
                 return;
             }
 
+            // Same url for all KREST registers, but different api tokens
             string sourceUrl = ConfigurationValues.RedcapKrestUrl;
-            string sourceApiToken = sourceApiToken;
 
             string targetUrl = ConfigurationValues.RedcapNorpregUrl;
             string targetApiToken = ConfigurationValues.RedcapApiToken.RedcapApiToken["NORPREG"];
@@ -85,7 +85,7 @@ namespace PvkBroker.Redcap
 
             var fetchContent = new FormUrlEncodedContent(new[]
             {
-                new KeyValuePair<string, string>("token", ConfigurationValues.RedcapApiToken["NORPREG"]),
+                new KeyValuePair<string, string>("token", ConfigurationValues.RedcapApiToken["NORPREG"]), 
                 new KeyValuePair<string, string>("content", "record"),
                 new KeyValuePair<string, string>("action", "export"),
                 new KeyValuePair<string, string>("format", "json"),

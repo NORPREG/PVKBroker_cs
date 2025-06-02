@@ -51,27 +51,38 @@ public class PvkCaller
         return request;
      }
 
-    public async Task<List<SimplePvkEvent>> CallApiHentInnbyggereAktivePiForDefinisjon(string accessToken, int pagingReference = 0)
+public async Task<List<SimplePvkEvent>> CallApiHentInnbyggereAktivePiForDefinisjon(string accessToken)
+{
+    var allEvents = new List<SimplePvkEvent>();
+    int pagingReference = 0;
+
+    do
     {
         var query = new Dictionary<string, string>
         {
             { "definisjonGuid", ConfigurationValues.PvkDefinisjonGuid_1 },
             { "partKode", ConfigurationValues.PvkPartKode },
             { "pagingReference", pagingReference.ToString() }
-        };
+        }
+        
+        string queryString = string.Join("&", query.Select(kvp => $"{kvp.Key}={kvp.Value}"));
 
-
-        var queryString = string.Join("&", query.Select(kvp => $"{kvp.Key}={kvp.Value}"));
-
-        var url = ConfigurationValues.PvkSystemUrl + ConfigurationValues.PvkHentInnbyggereAktivePiForDefinisjonUrl + "?" + queryString;
+        string systemUrl = ConfigurationValues.PvkSystemUrl;
+        string baseUrl = ConfigurationValues.PvkHentInnbyggereAktivePiForDefinisjonUrl    
+        var url = $"{ConfigurationValues.PvkSystemUrl}{ConfigurationValues.PvkHentInnbyggereAktivePiForDefinisjonUrl}?{queryString}";
+        
         var request = CreateHttpRequestMessage(accessToken, url, "GET");
-
         var responseBody = await SendRequestAndHandleResponse(request);
         var jsonResponse = ResponseParser.ParseApiResponseHentInnbyggere(responseBody);
-        List<SimplePvkEvent> pvkEvents = ResponseParser.ParseResponse(jsonResponse);
+        var pageEvents = ResponseParser.ParseResponse(jsonResponse);
 
-        return pvkEvents;
-    }
+        allEvents.AddRange(pageEvents);
+        pagingReference = jsonResponse.pagingReference;
+
+    } while (pagingReference != 0);
+
+    return allEvents;
+}
 
     private static HelseIdConfiguration SetUpHelseIdConfiguration()
     {
