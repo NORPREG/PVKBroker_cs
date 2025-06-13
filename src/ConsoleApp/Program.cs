@@ -1,20 +1,82 @@
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using Microsoft.EntityFrameworkCore;
-
 using PvkBroker.Configuration;
 using PvkBroker.Pvk.ApiCaller;
 using PvkBroker.Pvk.TokenCaller;
 // using PvkBroker.Kodeliste;
 // using PvkBroker.Redcap;
 using PvkBroker.Tools;
+using Serilog;
 using System;
 using System.Collections.Generic;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 using System.Threading.Tasks;
-using Serilog;
+using static IdentityModel.OidcConstants;
 
-var services = new ServiceCollection();
-SetupLogging.Initialize();
+namespace PvkBroker.ConsoleApp
+{
+    public class Program
+    {
+        static async Task Main(string[] args)
+        {
+            await MainAsync(args);
+        }
+
+        static async Task MainAsync(string[] args)
+        {
+            SetupLogging.Initialize();
+
+            var services = new ServiceCollection();
+            services.AddSingleton<AccessTokenCaller>();
+            services.AddSingleton<PvkCaller>();
+            services.AddSingleton<Encryption>();
+            services.AddSingleton<Orchestrations>();
+            services.AddHttpClient();
+
+            var serviceProvider = services.BuildServiceProvider();
+
+            var _orchestration = serviceProvider.GetRequiredService<Orchestrations>();
+            try
+            {
+                if (args.Length == 0)
+                {
+                    Console.WriteLine("Programmet kjørt uten argumenter, henter PVK hendelser for alle innbyggere med reservasjon.");
+                    List<SimplePvkEvent> pvkResponse = await _orchestration.CallPvkAndParseResponse();
+
+                    Console.WriteLine("Antall hendelser i PVK: " + pvkResponse.Count);
+
+                    var options = new JsonSerializerOptions
+                    {
+                        WriteIndented = true,
+                        DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
+                    };
+
+                    string jsonOutput = JsonSerializer.Serialize(pvkResponse, options);
+                    Console.WriteLine(jsonOutput);
+                }
+
+                else if (args.Length == 1)
+                {
+                    Console.WriteLine("Programmet kjørt med argument, henter data fra angitt JSON fil og setter status deretter.");
+
+                    string pvkResponse = await _orchestration.CallPvkAndSetDefinition(args[0]);
+                    Console.WriteLine("PVK respons: " + pvkResponse);
+                }
+                else
+                {
+                    Console.WriteLine("Ugyldige argumenter. Bruk en JSON filsti for å sette definisjon eller uten argument for å hente ut alle hendelser.");
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("Feil: " + ex.Message);
+            }
+        }
+    }
+}
+
 
 // Inline DI for KodelisteDbContext
 
@@ -33,41 +95,23 @@ services.AddDbContext<KodelisteDbContext>(options =>
 */
 
 // DI for other services
-services.AddSingleton<PvkBroker.Pvk.TokenCaller.AccessTokenCaller>();
-services.AddSingleton<PvkBroker.Pvk.ApiCaller.PvkCaller>();
+
 // services.AddSingleton<PvkBroker.Kodeliste.KodelisteInterface>();
 // services.AddSingleton<PvkBroker.Redcap.RedcapInterface>();
-services.AddSingleton<PvkBroker.Tools.Encryption>();
-services.AddSingleton<PvkBroker.ConsoleApp.Orchestrations>();
+
 // services.AddSingleton<PvkBroker.Kodeliste.PatientIDCacheService>();
-services.AddHttpClient();
+
 
 // Bygg
-var serviceProvider = services.BuildServiceProvider();
 
 // var _kodeliste = serviceProvider.GetRequiredService<KodelisteInterface>();
-var _orchestration = serviceProvider.GetRequiredService<PvkBroker.ConsoleApp.Orchestrations>();
+// _kodeliste.ReloadCache();
+// Get reservations from Kodeliste database BEFORE newest sync
+// var reservationDelta = _orchestration.CompareCurrentReservationWithNewPvkEvents(patientReservations, newPvkEvents);
 
-try
-{
-    // _kodeliste.ReloadCache();
+// Make row in PvkSync table, get index for linking PvkEvent rows
+// string pvkSyncId = _kodeliste.CreatePvkSync(reservationDelta);
 
-    List<SimplePvkEvent> pvkResponse = await _orchestration.CallPvkAndParseResponse();
-
-    Console.WriteLine("Antall hendelser i PVK: " + pvkResponse.Count);
-    Console.WriteLine("Første hendelse: " + pvkResponse[0].ToString()); 
-
-    // Get reservations from Kodeliste database BEFORE newest sync
-    // var reservationDelta = _orchestration.CompareCurrentReservationWithNewPvkEvents(patientReservations, newPvkEvents);
-
-    // Make row in PvkSync table, get index for linking PvkEvent rows
-    // string pvkSyncId = _kodeliste.CreatePvkSync(reservationDelta);
-
-    // await _orchestration.HandleNewReservations(reservationDelta.NewReservations, pvkSyncId);
-    // await _orchestration.HandleWithdrawnReservations(reservationDelta.WithdrawnReservations, pvkSyncId);
-    // await _orchestration.HandleNewPatients();
-}
-catch (Exception ex)
-{
-    Console.WriteLine("Feil: " + ex.Message);
-}
+// await _orchestration.HandleNewReservations(reservationDelta.NewReservations, pvkSyncId);
+// await _orchestration.HandleWithdrawnReservations(reservationDelta.WithdrawnReservations, pvkSyncId);
+// await _orchestration.HandleNewPatients();

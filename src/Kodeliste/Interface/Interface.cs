@@ -137,7 +137,7 @@ namespace PvkBroker.Kodeliste
             }
             return null;
         }
-        public void AddPvkEvent(int patientKey, bool isReserved, int SyncId)
+        public void AddPvkEvent(string patientKey, bool isReserved, int SyncId)
         {
             try
             {

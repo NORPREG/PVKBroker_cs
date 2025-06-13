@@ -32,13 +32,11 @@ public class ClientConfigurator
         var configuration = SetUpHelseIdConfiguration();
         var tokenRequestBuilder = CreateTokenRequestBuilder(configuration, endpointDiscoverer);
         var tokenRequestParameters = SetUpTokenRequestParameters();
-        var expirationTimeCalculator = new ExpirationTimeCalculator(new DateTimeService());
         var payloadClaimsCreator = SetUpPayloadClaimsCreator();
         var dPoPProofCreator = new DPoPProofCreator(configuration);
 
         return new Machine2MachineClient(
             tokenRequestBuilder,
-            expirationTimeCalculator,
             payloadClaimsCreator,
             tokenRequestParameters);
     }

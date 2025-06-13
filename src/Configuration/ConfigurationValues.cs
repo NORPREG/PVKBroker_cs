@@ -58,6 +58,7 @@ public static class ConfigurationValues
     public static string PvkHentInnbyggereAktivePiForDefinisjonUrl = $"{PvkBaseUrl}/HentInnbyggereAktivePiForDefinisjon/v2";
     public static string PvkHentInnbyggersPiForPartUrl = $"{PvkBaseUrl}/HentInnbyggersPiForPart/v2";
     public static string PvkSjekkInnbyggersPiStatusUrl = $"{PvkBaseUrl}/SjekkInnbyggersPiStatus/v2";
+    public static string PvkSettInnbyggersPersonvernInnstillingUrl = $"{PvkBaseUrl}/SettInnbyggersPersonvernInnstilling/v2";
 
     public static int QuarantinePeriodInDays = 30;
     public static int PvkSyncTimeInHours = 24;
@@ -93,6 +94,8 @@ public static class ConfigurationValues
     public const string PvkDefinisjonGuid_1 = "56a8756c-49f7-4cb9-bfc0-ba282baf0f83"; 
     public const string PvkDefinisjonNavn_1 = "Reservasjon mot oppføring i NORPREG";
 
+    public const string PvkTypePi = "reservasjon"; // reservasjon, samtykke, tilgangsbegrensning
+
     // Same for test and test-inet
     public static string PvkApiClientId = environment == "prod" ? ProdPvkApiClientId : TestPvkApiClientId;
 
@@ -109,8 +112,7 @@ public static class ConfigurationValues
     // Switch to user-based login?
     public static string KodelisteUsername = Environment.GetEnvironmentVariable("KodelisteUsername"); // "cs";
     public static string KodelistePassword = Environment.GetEnvironmentVariable("KodelistePassword"); // "InitializeComponent547";
-
-    public static string KodelisteAesKey = Environment.GetEnvironmentVariable("KodelisteAesKey");
+    public static string KodelisteAesKey = "AesKeyForTest"; // Environment.GetEnvironmentVariable("KodelisteAesKey");
 
     // TODO: add correct URLs when REDCap setup is complete
     public static string RedcapNorpregUrl = "redcap.helse-nord.no/api/";

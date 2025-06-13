@@ -140,7 +140,7 @@ namespace PvkBroker.Kodeliste
         public Patient patient { get; set; }
         public int fk_sync_id { get; set; } // foreign key to the sync
         public PvkSync pvk_sync { get; set; }
-        public bool is_reserved_aes { get; set; } // encrypted reservation status ("1" = reserved, "0" = not reserved)
+        public string is_reserved_aes { get; set; } // encrypted reservation status ("1" = reserved, "0" = not reserved)
     }
 
     public class PvkSync

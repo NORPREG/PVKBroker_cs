@@ -143,23 +143,19 @@ namespace PvkBroker.ConsoleApp
         {
             string accessToken = await _accessTokenCaller.GetAccessToken();
             ClaimsPrincipal principal = await _accessTokenCaller.ValidateAccessTokenAsync(accessToken);
-            Console.WriteLine("Access Token: " + accessToken);
 
             List<SimplePvkEvent> newPvkEvents = await _pvkCaller.CallApiHentInnbyggereAktivePiForDefinisjon(accessToken);
 
             return newPvkEvents;
         }
-        public async Task<string> CallHelseIdAndReturnAccessToken()
+
+        public async Task<string> CallPvkAndSetDefinition(string jsonPath)
         {
             string accessToken = await _accessTokenCaller.GetAccessToken();
-
-            Console.WriteLine("Access Token: " + accessToken);
-            Console.WriteLine("Validating Access Token...");
             ClaimsPrincipal principal = await _accessTokenCaller.ValidateAccessTokenAsync(accessToken);
-            Console.WriteLine("Access Token validated successfully: ", principal);
-            Console.WriteLine("Validated Access Token...");
 
-            return accessToken;
+            string response = await _pvkCaller.CallApiSettInnbyggersPersonvernInnstilling(accessToken, jsonPath);
+            return response;
         }
     }
 }

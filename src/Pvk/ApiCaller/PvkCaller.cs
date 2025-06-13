@@ -13,6 +13,8 @@ using HelseId.Samples.Common.Configuration;
 using HelseId.Samples.Common.Models;
 using System.Net.Http;
 using System;
+using System.Text;
+using System.Text.Json; 
 using Serilog;
 
 namespace PvkBroker.Pvk.ApiCaller;
@@ -66,13 +68,8 @@ public class PvkCaller
 
             string systemUrl = ConfigurationValues.PvkSystemUrl;
             string baseUrl = ConfigurationValues.PvkHentInnbyggereAktivePiForDefinisjonUrl;
-            var url = $"{ConfigurationValues.PvkSystemUrl}{ConfigurationValues.PvkHentInnbyggereAktivePiForDefinisjonUrl}?{queryString}";
+            var url = $"{systemUrl}{baseUrl}?{queryString}";
         
-            DateTime currentTime = DateTime.UtcNow;
-            long unixTime = ((DateTimeOffset)currentTime).ToUnixTimeSeconds();
-
-            Console.WriteLine($"Requesting using access token {accessToken}. Time now is {unixTime}");
-
             var request = CreateHttpRequestMessage(accessToken, url, "GET");
 
             var responseBody = await SendRequestAndHandleResponse(request);
@@ -82,14 +79,48 @@ public class PvkCaller
             allEvents.AddRange(pageEvents);
             pagingReference = jsonResponse.pagingReference;
 
+            // sleep 100 milliseconds to avoid hitting rate limits
+            await Task.Delay(100);
+
         } while (pagingReference != "0");
 
         return allEvents;
     }
 
-    public async Task<string> CallApiSettInnbyggersPersonvernInnstilling(string accessToken)
+    public async Task<string> CallApiSettInnbyggersPersonvernInnstilling(string accessToken, string jsonPath)
     {
+        Console.WriteLine("CallApiSettInnbyggersPersonvernInnstilling");
 
+        string systemUrl = ConfigurationValues.PvkSystemUrl;
+        string baseUrl = ConfigurationValues.PvkSettInnbyggersPersonvernInnstillingUrl;
+        var url = $"{systemUrl}{baseUrl}";
+        var request = CreateHttpRequestMessage(accessToken, url, "POST");
+
+        Console.WriteLine("Setting personverninnstilling for innbygger using JSON file: " + jsonPath);
+
+        ApiRequestSettInnbygger payload = await SettInnbyggerJsonReader.ReadJsonFile(jsonPath);
+
+        var options = new JsonSerializerOptions
+        {
+            DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull,
+        };
+
+        var json = JsonSerializer.Serialize(payload, options);
+
+        Console.WriteLine("JSON payload to be sent: " + json);
+
+        request.Content = new StringContent(json, Encoding.UTF8, "application/json");
+
+        Console.WriteLine("Sending request to PVK API to set personverninnstilling for innbygger.");
+
+        // var responseBody = await SendRequestAndHandleResponse(request);
+        string responseBody = "sasd";
+        
+        if (responseBody == null)
+        {
+            throw new Exception("Failed to set personverninnstilling for innbygger.");
+        }
+        return responseBody;
     }
 
     private static HelseIdConfiguration SetUpHelseIdConfiguration()
