@@ -20,7 +20,6 @@ public class Machine2MachineClient
     private ClientCredentialsTokenRequestParameters _tokenRequestParameters;
     private IExpirationTimeCalculator _expirationTimeCalculator;
     private DateTime _persistedAccessTokenExpiresAt = DateTime.MinValue; // cache this to disk
-    private string _persistedAccessToken = string.Empty; // cache this to disk
     private ClientCredentialsTokenRequest? request;
     private readonly IPayloadClaimsCreatorForClientAssertion _payloadClaimsCreatorForClientAssertion;
 
@@ -38,19 +37,13 @@ public class Machine2MachineClient
         request = null;
     }
 
-    public string GetAccessToken()
-    {
-        return _persistedAccessToken;
-    }
-
-    public async Task<string> GetAccessToken(HttpClient httpClient)
+    public async Task<TokenResponse> GetAccessToken(HttpClient httpClient)
     {
         // Token caching is file based and happens in Pvk/TokenCaller/AccesTokenCaller.cs
 
         var tokenResponse = await GetAccessTokenFromHelseId(httpClient);
-        string accessToken = tokenResponse.AccessToken!;
 
-        return accessToken;
+        return tokenResponse;
     }
 
     private async Task<TokenResponse> GetAccessTokenFromHelseId(HttpClient httpClient)
@@ -76,18 +69,24 @@ public class Machine2MachineClient
     {
         // The request to HelseID is created:
 
+        Console.WriteLine("Creating ClientCredentialsTokenRequest to HelseID...");  
         request = await _tokenRequestBuilder.CreateClientCredentialsTokenRequest(
             _payloadClaimsCreatorForClientAssertion,
             _tokenRequestParameters,
             null);
         
-        // InspectRequest(request);
+        Console.WriteLine("Requesting ClientCredentialsToken from HelseID with the following request:");
+        InspectRequest(request);
 
         var tokenResponse = await httpClient.RequestClientCredentialsTokenAsync(request);
 
         if (tokenResponse.IsError && tokenResponse.Error == "use_dpop_nonce" && !string.IsNullOrEmpty(tokenResponse.DPoPNonce))
         {
-            request = await _tokenRequestBuilder.CreateClientCredentialsTokenRequest(_payloadClaimsCreatorForClientAssertion, _tokenRequestParameters, tokenResponse.DPoPNonce);
+            request = await _tokenRequestBuilder.CreateClientCredentialsTokenRequest(
+                _payloadClaimsCreatorForClientAssertion,
+                _tokenRequestParameters,
+                tokenResponse.DPoPNonce);
+
             tokenResponse = await httpClient.RequestClientCredentialsTokenAsync(request);
         }
         return tokenResponse;

@@ -43,14 +43,14 @@ public class OmfangElementer
 public class SimplePvkEvent
 {
     public string PatientID { get; set; }
-	public string PatientKey { get; set; }
+	public string? PatientKey { get; set; }
 	public bool IsReserved { get; set; }
     public DateTime EventTime { get; set; }
 }
 
 public class ResponseParser
 {
-    public static ApiResponseHentInnbyggere ParseApiResponseHentInnbyggere(string responseBody)
+    public static ApiResponseHentInnbyggere? ParseApiResponseHentInnbyggere(string responseBody)
 	{ 
 		var jsonOptions = new JsonSerializerOptions
         {
@@ -62,18 +62,19 @@ public class ResponseParser
             return null;
         }
 
-		try {
-			return parsedResponse = JsonSerializer.Deserialize<ApiResponseHentInnbyggere>(
-	            responseBody,
-				jsonOptions);
-			
-		catch (JsonException ex) {
+        try
+        {
+            return JsonSerializer.Deserialize<ApiResponseHentInnbyggere>(responseBody, jsonOptions);
+        }
+
+        catch (JsonException ex)
+        {
             Log.Error("Error deserializing API response: {@ex}", ex);
             return null;
         }
     }
 
-    public static List<SimplePvkEvent> ParseResponse(ApiResponseModel apiResponse)
+    public static List<SimplePvkEvent> ParseResponse(ApiResponseHentInnbyggere apiResponse)
     {
         var pvkEvents = new List<SimplePvkEvent>();
         foreach (var eventItem in apiResponse.personvernInnstillinger)
@@ -81,7 +82,7 @@ public class ResponseParser
             var simpleEvent = new SimplePvkEvent
             {
                 PatientID = eventItem.innbyggerFnr,
-                PatientKey = _kodeliste.GetPatientKey(eventItem.innbyggerFnr),
+                // PatientKey = _kodeliste.GetPatientKey(eventItem.innbyggerFnr),
                 EventTime = eventItem.sistEndretTidspunkt,
                 IsReserved = true
             };

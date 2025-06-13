@@ -10,7 +10,7 @@ using Serilog;
 
 namespace PvkBroker.Redcap
 {
-    class RedcapInterface
+    public class RedcapInterface
     {
         private readonly IHttpClientFactory _httpClientFactory;
 
@@ -21,7 +21,7 @@ namespace PvkBroker.Redcap
 
         static async Task ExportAndImportAsync(string registerNavn, string recordId)
         {
-            if (!ConfigurationValues.RedcapApiTokens.TryGetValue(registerNavn, out var sourceApiToken))
+            if (!ConfigurationValues.RedcapApiToken.TryGetValue(registerNavn, out var sourceApiToken))
             {
                 Log.Error($"Register '{registerNavn}' not found in configuration.");
                 return;
@@ -31,7 +31,7 @@ namespace PvkBroker.Redcap
             string sourceUrl = ConfigurationValues.RedcapKrestUrl;
 
             string targetUrl = ConfigurationValues.RedcapNorpregUrl;
-            string targetApiToken = ConfigurationValues.RedcapApiToken.RedcapApiToken["NORPREG"];
+            string targetApiToken = ConfigurationValues.RedcapApiToken["NORPREG"];
 
             var httpClient = _httpClientFactory.CreateClient();
 
@@ -64,7 +64,6 @@ namespace PvkBroker.Redcap
                 new KeyValuePair<string, string>("overwriteBehavior", "overwrite"),
                 new KeyValuePair<string, string>("data", patientJson)
             });
-
 
             var importResponse = await httpClient.PostAsync(targetUrl, importContent);
             if (!importResponse.IsSuccessStatusCode)

@@ -77,13 +77,13 @@ namespace PvkBroker.Kodeliste
                 .HasForeignKey(pe => pe.fk_export_id);
 
             modelBuilder.Entity<PatientExport>()
-            .HasIndex(pe => pe.pseudo_key)
-            .IsUnique();
+                .HasIndex(pe => pe.pseudo_key_aes)
+                .IsUnique();
 
             // Export (many) <-> (one) Study
             modelBuilder.Entity<Export>()
                 .HasOne(e => e.study)
-                .WithMany(s => s.export_list)
+                .WithMany(s => s.exports)
                 .HasForeignKey(e => e.fk_study_id);
 
             // DataStatus (one) <-> (one) Course
@@ -101,7 +101,7 @@ namespace PvkBroker.Kodeliste
             // PvkEvents (one) <-> (many) PvkSync
             modelBuilder.Entity<PvkEvent>()
                .HasOne(pe => pe.pvk_sync)
-               .WithMany(ps => ps.pvk_event)
+               .WithMany(ps => ps.pvk_events)
                .HasForeignKey(pe => pe.fk_sync_id);
         }
     }

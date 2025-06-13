@@ -1,4 +1,10 @@
 using Serilog;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
+using System;
+
+using PvkBroker.Tools;
 
 // If this service becomes too slow, try parallellizing the decryption
 
@@ -44,6 +50,10 @@ namespace PvkBroker.Kodeliste
                         _fnrToPatientIdMap[decryptedFnr] = list;
                     }
                     list.Add(id);
+                }
+                catch (Exception ex)
+                {
+                    Log.Error(ex, "Error decrypting fnr for PatientID: {@id}", id);
                 }
             }
             

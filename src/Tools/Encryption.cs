@@ -21,7 +21,8 @@ namespace PvkBroker.Tools
             if (parts.Length != 2)
                 throw new ArgumentException("ivCipher må være på formatet 'iv:cipher'");
 
-            byte[] key = ConfigurationValues.KodelisteAesKey;
+            var aes_key_ascii = ConfigurationValues.KodelisteAesKey;
+            byte[] key = Encoding.ASCII.GetBytes(aes_key_ascii);
             byte[] iv = Convert.FromBase64String(parts[0]);
             byte[] cipherText = Convert.FromBase64String(parts[1]);
 
@@ -40,7 +41,8 @@ namespace PvkBroker.Tools
 
         public static string Encrypt(string plaintext)
         {
-            byte[] key = ConfigurationValues.KodelisteAesKey;
+            var aes_key_ascii = ConfigurationValues.KodelisteAesKey;
+            byte[] key = Encoding.ASCII.GetBytes(aes_key_ascii);
             using var aes = Aes.Create();
             aes.Key = key;
             aes.GenerateIV();
@@ -61,18 +63,18 @@ namespace PvkBroker.Tools
         }
 
         // To encrypt and decrypt is_reserved status
-        public static string EncryptBool(bool value, byte[] key)
+        public static string EncryptBool(bool value)
         {
             // Convert boolean to string
             string text = value ? "1" : "0";
             // Encrypt the string
-            return Encrypt(text, key);
+            return Encrypt(text);
         }
 
-        public static bool DecryptBool(string ivCipher, byte[] key)
+        public static bool DecryptBool(string ivCipher)
         {
             // Decrypt the string
-            string decryptedText = Decrypt(ivCipher, key);
+            string decryptedText = Decrypt(ivCipher);
             // Convert decrypted string back to boolean
             return decryptedText == "1";
         }
@@ -80,6 +82,7 @@ namespace PvkBroker.Tools
         // Old functions below for constant IV, not recommended
         // Need to change the same method in DICOM Broker as well
 
+        #region OLD_FUNCTIONS
         static public string DecryptWithHashKey(string encryptedB64, string key)
         {
             // Generate SHA-256 hash of the key
@@ -166,5 +169,6 @@ namespace PvkBroker.Tools
             }
             return paddedData;
         }
+        #endregion
     }
 }

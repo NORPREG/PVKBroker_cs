@@ -1,12 +1,12 @@
 using PvkBroker.Configuration;
-using PvkBroker.Tools;
+// using PvkBroker.Tools;
 using Serilog;
 
 namespace PvkBroker.Pvk.TokenCaller;
 
 public class CachedToken
 {
-    public string AccessToken { get; set; } = string.Empty;
+    public string? AccessToken { get; set; }
     public DateTime ExpiresAt { get; set; }
 }
 
@@ -31,7 +31,7 @@ public class TokenCacher
             if (cachedToken != null && cachedToken.ExpiresAt > DateTime.UtcNow)
             {
                 Log.Information("Found cached Access Token that is still valid, using this.");
-                cachedToken.AccessToken = Encryption.Decrypt(cachedToken.AccessToken);
+                // cachedToken.AccessToken = Encryption.Decrypt(cachedToken.AccessToken);
                 return cachedToken;
             }
         }
@@ -58,7 +58,8 @@ public class TokenCacher
     {
         var cachedToken = new CachedToken
         {
-            AccessToken = Encryption.Encrypt(accessToken),
+            // AccessToken = Encryption.Encrypt(accessToken),
+            AccessToken = accessToken,
             ExpiresAt = expiresAt
         };
         

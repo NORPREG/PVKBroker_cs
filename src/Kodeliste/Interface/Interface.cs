@@ -11,6 +11,8 @@ using System.Data;
 using System.Data.Common;
 using Microsoft.AspNetCore.Routing.Constraints;
 
+using PvkBroker.Tools;
+
 /*  Workflow when syncing against PVK 
 1) Get list of all reserved patients from PVK
 2) Loop through PatientID table
@@ -40,7 +42,7 @@ namespace PvkBroker.Kodeliste
 
     public class KodelisteInterface
     {
-        private readonly PatientIDCacheService cache;
+        private readonly PatientIDCacheService _cache;
         private readonly KodelisteDbContext _context;
 
         public KodelisteInterface(KodelisteDbContext context, PatientIDCacheService cache)
@@ -242,7 +244,7 @@ namespace PvkBroker.Kodeliste
                 var newEvent = new PvkEvent
                 {
                     fk_patient_key = eventObject.PatientKey,
-                    is_reserved_aes = Encryption.EncryptBool(eventObject.IsReserved)
+                    is_reserved_aes = Encryption.EncryptBool(eventObject.IsReserved),
                     event_time = eventObject.EventTime,
                     fk_sync_id = syncId
                 };

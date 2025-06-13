@@ -8,13 +8,20 @@ namespace PvkBroker.Configuration;
 
 public static class ConfigurationValues
 {
-    public static string environment = "test";
+    public static string environment = "test-inet";
 
-    // The URL for HelseID (may be set as an environment variable)
+    // The URL for HelseID
     public static string TestStsUrl { get;  } = "https://helseid-sts.test.nhn.no";
-    public static string ProdStsUrl { get; } = "https://helseid-sts.test.nhn.no";
+    public static string ProdStsUrl { get; } = "https://helseid-sts.nhn.no";
+    public static string TestInetStsUrl { get; } = "https://helseid-sts.test.nhn.no";
 
-    public static string StsUrl = environment == "test" ? TestStsUrl : ProdStsUrl;
+    public static string StsUrl = environment switch
+    {
+        "test" => TestStsUrl,
+        "test-inet" => TestInetStsUrl,
+        "prod" => ProdStsUrl,
+        _ => throw new ArgumentException("Invalid environment specified")
+    };
 
     public static string StsPort = "443";
     public static string JwksUri = $"{StsUrl}/.well-known/openid-configuration";
@@ -31,9 +38,19 @@ public static class ConfigurationValues
     public const string ApiForPvkReadScope = $"{ApiForPvkAudience}/personverninnstilling_read";
     public const string ApiForPvkWriteScope = $"{ApiForPvkAudience}/personverninnstilling_write";
 
+    public const string PvkApiScope = $"{ApiForPvkReadScope} {ApiForPvkWriteScope}"; // use this
+
     public const string TestPvkSystemUrl = "https://eksternapi-helsenett.hn2.test.nhn.no";
-    public const string ProdPvkSystemUrl = "https://eksternapi-helsenett.hn2.test.nhn.no";
-    public static string PvkSystemUrl = environment == "test" ? TestPvkSystemUrl : ProdPvkSystemUrl;
+    public const string TestInetPvkSystemUrl = "https://eksternapi.hn2.test.nhn.no";
+    public const string ProdPvkSystemUrl = "https://eksternapi-helsenett.helsenorge.no";
+    
+    public static string PvkSystemUrl = environment switch
+    {
+        "test" => TestPvkSystemUrl,
+        "test-inet" => TestInetPvkSystemUrl,
+        "prod" => ProdPvkSystemUrl,
+        _ => throw new ArgumentException("Invalid environment specified")
+    };
 
     public static string PvkBaseUrl = "/personvern/Personverninnstillinger";
 
@@ -42,8 +59,8 @@ public static class ConfigurationValues
     public static string PvkHentInnbyggersPiForPartUrl = $"{PvkBaseUrl}/HentInnbyggersPiForPart/v2";
     public static string PvkSjekkInnbyggersPiStatusUrl = $"{PvkBaseUrl}/SjekkInnbyggersPiStatus/v2";
 
-    public readonly int QuarantinePeriodInDays = 30;
-    public readonly int PvkSyncTimeInHours = 24;
+    public static int QuarantinePeriodInDays = 30;
+    public static int PvkSyncTimeInHours = 24;
 
 
     // HelseID scopes defined at https://helseid.atlassian.net/wiki/spaces/HELSEID/pages/5603417/Scopes
@@ -71,21 +88,19 @@ public static class ConfigurationValues
     // -----------------------------------------------------------------------------------------------------------------
 
     public const string TestPvkApiClientId = "a1c7bdb1-07be-43cc-b876-95fc5c7aa180"; // This is HelseID client ID
-    public const string ProdPvkApiClientId = "a1c7bdb1-07be-43cc-b876-95fc5c7aa180"; // This is HelseID client ID
+    public const string ProdPvkApiClientId = ""; // This is HelseID client ID
     
-    public const string NewPvkApiClientId = "5aee1830-29f5-4f7f-8927-a20ee9fb4125"; // where is this from?
+    public const string PvkDefinisjonGuid_1 = "56a8756c-49f7-4cb9-bfc0-ba282baf0f83"; 
+    public const string PvkDefinisjonNavn_1 = "Reservasjon mot oppføring i NORPREG";
 
-    public const string PvkDefinisjonGuid_1 = "2c11f0ca-7270-43f1-a473-bac325feb3f6"; 
-    public const string PvkDefinisjonNavn_1 = "Proton- og stråleregister samtykke"; 
+    // Same for test and test-inet
+    public static string PvkApiClientId = environment == "prod" ? ProdPvkApiClientId : TestPvkApiClientId;
 
-    public const string PvkDefinisjonGuid_2 = "1615e446-93a9-4cdc-97b0-9e32f47c1df9";
+    public const string TestPvkPartKode = "norpreg";
+    public const string ProdPvkPartKode = "norpreg";
 
-    public static string PvkApiClientId = environment == "test" ? TestPvkApiClientId : ProdPvkApiClientId;
-
-    public const string TestPvkPartKode = "prostraa";
-    public const string ProdPvkPartKode = "prostraa";
-
-    public static string PvkPartKode = environment == "test" ? TestPvkPartKode : ProdPvkPartKode;
+    // Same for test and test-inet
+    public static string PvkPartKode = environment == "prod" ? ProdPvkPartKode : TestPvkPartKode;
 
     // MySQL database connection string
     public const string KodelisteServer = "localhost";
@@ -95,10 +110,11 @@ public static class ConfigurationValues
     public static string KodelisteUsername = Environment.GetEnvironmentVariable("KodelisteUsername"); // "cs";
     public static string KodelistePassword = Environment.GetEnvironmentVariable("KodelistePassword"); // "InitializeComponent547";
 
-    public static string KodelisteAesKey = Environment.GetEnvironmentVarible("KodelisteAesKey");
+    public static string KodelisteAesKey = Environment.GetEnvironmentVariable("KodelisteAesKey");
 
-    string targetUrl = ConfigurationValues.RedcapNorpregUrl;
-    string targetApiToken = ConfigurationValues.RedcapApiToken.RedcapApiToken["NORPREG"];
+    // TODO: add correct URLs when REDCap setup is complete
+    public static string RedcapNorpregUrl = "redcap.helse-nord.no/api/";
+    public static string RedcapKrestUrl = "redcap.helse-bergen.no/api/";
 
     public static readonly Dictionary<string, string> RedcapApiToken = new()
     {
@@ -107,19 +123,8 @@ public static class ConfigurationValues
         { "KREST-HUS", Environment.GetEnvironmentVariable("RedcapKrestHusApiToken") }
     };
 
-    public static readonly RedcapNorpregUrl = "redcap.helse-nord.no/api/";
-    public static readonly RedcapKrestOusUrl = "redcap.helse-bergen.no/api/";
-    public static readonly RedcapKrestHusUrl = "redcap.helse-bergen.no/api/";
-
-
-    // -----------------------------------------------------------------------------------------------------------------
-    // Client scopes:
-    // -----------------------------------------------------------------------------------------------------------------
-
-        // Sets both the client credential scope (for claims that the PvkApi HelseId API needs)
-        // and the client info scope for use against the client info endpoint:
-
-    public const string PvkApiScope = $"{ApiForPvkReadScope} {ApiForPvkWriteScope}"; // use this
+    public static string TargetUrl = ConfigurationValues.RedcapNorpregUrl;
+    public static string TargetApiToken = ConfigurationValues.RedcapApiToken["NORPREG"];
 
     public static string GetPrivateKey()
     {

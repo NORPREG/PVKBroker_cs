@@ -5,6 +5,8 @@ using System.IdentityModel.Tokens.Jwt;
 using Microsoft.IdentityModel.Tokens;
 using System.Security.Claims;
 
+using IdentityModel.Client;
+
 // FROM DLL
 using HelseId.Samples.Common.JwtTokens;
 using HelseId.Samples.Common.Configuration;
@@ -25,7 +27,7 @@ namespace PvkBroker.Pvk.TokenCaller;
 public class AccessTokenCaller
 {
     private ClientConfigurator _clientConfigurator;
-    private Machine2MachineClient _client;
+    private Machine2MachineClient? _client;
     private readonly IHttpClientFactory _httpClientFactory;
 
     public AccessTokenCaller(IHttpClientFactory httpClientFactory)
@@ -41,26 +43,27 @@ public class AccessTokenCaller
             _client = _clientConfigurator.ConfigureClient();
         }
 
-        var cached = TokenCacher.GetFromCache();
+        var cached = await TokenCacher.GetFromCache();
         if (cached != null)
         {
             return cached.AccessToken;
         }
 
         var httpClient = _httpClientFactory.CreateClient();
-        string accessToken = await _client.GetAccessToken(httpClient);
+        var tokenResponse = await _client.GetAccessToken(httpClient);
 
-        if (string.IsNullOrEmpty(accessToken))
+        if (string.IsNullOrEmpty(tokenResponse?.AccessToken))
         {
             return null;
         }
 
-        // Store the access token in the cache
-        var jwtHandler = new JwtSecurityTokenHandler();
-        var jwtToken = jwtHandler.ReadJwtToken(accessToken);
-        var expirationTime = jwtToken.ValidTo;
+        string accessToken = tokenResponse.AccessToken;
 
-        TokenCacher.SaveToCache(accessToken, expirationTime);
+        Console.WriteLine($"Expires in: {tokenResponse.ExpiresIn} seconds");
+
+        var expirationTime = DateTime.UtcNow.AddSeconds(tokenResponse.ExpiresIn);
+
+        await TokenCacher.SaveToCache(accessToken, expirationTime);
 
         return accessToken;
     }

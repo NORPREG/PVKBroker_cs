@@ -2,6 +2,7 @@ using Microsoft.Extensions.Hosting;
 using System;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Collections.Generic;
 using Serilog;
 
 using PvkBroker.Configuration;
@@ -9,8 +10,9 @@ using PvkBroker.Pvk.ApiCaller;
 using PvkBroker.Pvk.TokenCaller;
 using PvkBroker.Kodeliste;
 using PvkBroker.Redcap;
+using PvkBroker.Tools;
 
-namespace PvkBroker.Tools
+namespace PvkBroker.Service
 {
     public class ReservationDelta
     {
@@ -20,7 +22,6 @@ namespace PvkBroker.Tools
 
     public class Orchestrations
     {
-
         // Handling singleton dependency injection
         private readonly RedcapInterface _redcap;
         private readonly KodelisteInterface _kodeliste;
@@ -133,7 +134,7 @@ namespace PvkBroker.Tools
             return reservationDelta;
         }
 
-        public async Task<List<SimplePvkEvent>> CallPvkAndParseResponse(int pagingReference? = null)
+        public async Task<List<SimplePvkEvent>> CallPvkAndParseResponse()
         {
             string accessToken = await _accessTokenCaller.GetAccessToken();
             ClaimsPrincipal principal = await _accessTokenCaller.ValidateAccessTokenAsync(accessToken);
@@ -142,5 +143,13 @@ namespace PvkBroker.Tools
 
             return newPvkEvents;
         }
+        public async Task<string> CallHelseIdAndReturnAccessToken()
+        {
+            string accessToken = await _accessTokenCaller.GetAccessToken();
+            ClaimsPrincipal principal = await _accessTokenCaller.ValidateAccessTokenAsync(accessToken);
+
+            return accessToken;
+        }
+
     }
 }

@@ -21,16 +21,13 @@ public class PvkCaller
 {
     private readonly IDPoPProofCreator? _idPoPProofCreator;
     private readonly HelseIdConfiguration HelseIdConfigurationValues;
-    private readonly Kodeliste _kodeliste;
     private readonly IHttpClientFactory _httpClientFactory;
 
     public PvkCaller(
-        Kodeliste kodeliste,
         IHttpClientFactory httpClientFactory
     )
     {
         HelseIdConfigurationValues = SetUpHelseIdConfiguration();
-        _kodeliste = kodeliste;
         _idPoPProofCreator = new DPoPProofCreator(HelseIdConfigurationValues);
         _httpClientFactory = httpClientFactory;
     }
@@ -51,38 +48,49 @@ public class PvkCaller
         return request;
      }
 
-public async Task<List<SimplePvkEvent>> CallApiHentInnbyggereAktivePiForDefinisjon(string accessToken)
-{
-    var allEvents = new List<SimplePvkEvent>();
-    int pagingReference = 0;
-
-    do
+    public async Task<List<SimplePvkEvent>> CallApiHentInnbyggereAktivePiForDefinisjon(string accessToken)
     {
-        var query = new Dictionary<string, string>
+        var allEvents = new List<SimplePvkEvent>();
+        string pagingReference = "0";
+
+        do
         {
-            { "definisjonGuid", ConfigurationValues.PvkDefinisjonGuid_1 },
-            { "partKode", ConfigurationValues.PvkPartKode },
-            { "pagingReference", pagingReference.ToString() }
-        }
+            var query = new Dictionary<string, string>
+            {
+                { "definisjonGuid", ConfigurationValues.PvkDefinisjonGuid_1 },
+                { "partKode", ConfigurationValues.PvkPartKode },
+                { "pagingReference", pagingReference.ToString() }
+            };
         
-        string queryString = string.Join("&", query.Select(kvp => $"{kvp.Key}={kvp.Value}"));
+            string queryString = string.Join("&", query.Select(kvp => $"{kvp.Key}={kvp.Value}"));
 
-        string systemUrl = ConfigurationValues.PvkSystemUrl;
-        string baseUrl = ConfigurationValues.PvkHentInnbyggereAktivePiForDefinisjonUrl    
-        var url = $"{ConfigurationValues.PvkSystemUrl}{ConfigurationValues.PvkHentInnbyggereAktivePiForDefinisjonUrl}?{queryString}";
+            string systemUrl = ConfigurationValues.PvkSystemUrl;
+            string baseUrl = ConfigurationValues.PvkHentInnbyggereAktivePiForDefinisjonUrl;
+            var url = $"{ConfigurationValues.PvkSystemUrl}{ConfigurationValues.PvkHentInnbyggereAktivePiForDefinisjonUrl}?{queryString}";
         
-        var request = CreateHttpRequestMessage(accessToken, url, "GET");
-        var responseBody = await SendRequestAndHandleResponse(request);
-        var jsonResponse = ResponseParser.ParseApiResponseHentInnbyggere(responseBody);
-        var pageEvents = ResponseParser.ParseResponse(jsonResponse);
+            DateTime currentTime = DateTime.UtcNow;
+            long unixTime = ((DateTimeOffset)currentTime).ToUnixTimeSeconds();
 
-        allEvents.AddRange(pageEvents);
-        pagingReference = jsonResponse.pagingReference;
+            Console.WriteLine($"Requesting using access token {accessToken}. Time now is {unixTime}");
 
-    } while (pagingReference != 0);
+            var request = CreateHttpRequestMessage(accessToken, url, "GET");
 
-    return allEvents;
-}
+            var responseBody = await SendRequestAndHandleResponse(request);
+            var jsonResponse = ResponseParser.ParseApiResponseHentInnbyggere(responseBody);
+            var pageEvents = ResponseParser.ParseResponse(jsonResponse);
+
+            allEvents.AddRange(pageEvents);
+            pagingReference = jsonResponse.pagingReference;
+
+        } while (pagingReference != "0");
+
+        return allEvents;
+    }
+
+    public async Task<string> CallApiSettInnbyggersPersonvernInnstilling(string accessToken)
+    {
+
+    }
 
     private static HelseIdConfiguration SetUpHelseIdConfiguration()
     {

@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using Microsoft.EntityFrameworkCore;
 using PvkBroker.Configuration;
 using Serilog;
+using System;
 
 // This file is manually in sync with the SQLAlchemy models in the Python project.
 // https://github.com/NORPREG/DICOMBroker/blob/main/Dataclasses/KodelisteDataclass.py
@@ -145,7 +146,7 @@ namespace PvkBroker.Kodeliste
     public class PvkSync
     {
         public int id { get; set; }
-        public List<PvkEvent> pvk_events { get; set }
+        public List<PvkEvent> pvk_events { get; set; }
         public DateTime dt_sync { get; set; } // datetime of the last sync
         public int new_reservations { get; set; } // status of the sync
         public int withdrawn_reservations { get; set; } // status of the sync

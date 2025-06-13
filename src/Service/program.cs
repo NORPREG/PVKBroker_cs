@@ -28,7 +28,7 @@ public class Program
                     string UserName = ConfigurationValues.KodelisteUsername;
                     string Password = ConfigurationValues.KodelistePassword;
                     string connString = $"Server={Server};Database={DatabaseName};UserName={UserName};Password={Passoword};"
-                    options.UseMySql(connstring, ServerVesion.AutoDetect(connString));
+                    options.UseMySql(connString, ServerVersion.AutoDetect(connString));
                 });
 
                 services.AddSingleton<PvkBroker.Pvk.TokenCaller.AccessTokenCaller>();

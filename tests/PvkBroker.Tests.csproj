@@ -10,7 +10,6 @@
     <ProjectReference Include="..\src\Pvk\PvkBroker.Pvk.csproj" />
 	<ProjectReference Include="..\src\Kodeliste\PvkBroker.Kodeliste.csproj" />
 	<ProjectReference Include="..\src\HelseId\ClientCredentials\PvkBroker.HelseId.ClientCredentials.csproj" />
-	<ProjectReference Include="..\src\HelseId\CommonExtended\PvkBroker.HelseId.CommonExtended.csproj" />
     <ProjectReference Include="..\src\Redcap\PvkBroker.Redcap.csproj" />
 	<ProjectReference Include="..\src\Configuration\PvkBroker.Configuration.csproj" />
   </ItemGroup>
