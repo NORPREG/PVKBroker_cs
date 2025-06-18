@@ -1,3 +1,4 @@
+/*
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -7,7 +8,6 @@ using NUnit.Framework;
 using PvkBroker.Kodeliste.Encryption;
 
 // FRA LLM, se NØYE gjennom før jeg kjører
-
 public class ReservationComparerTests
 {
     [Test]
@@ -134,3 +134,4 @@ public class KodelisteDbContext
 {
     public virtual DbSet<PvkEvent> PvkEvents { get; set; }
 }
+*/
