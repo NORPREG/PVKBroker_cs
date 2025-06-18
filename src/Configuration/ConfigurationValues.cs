@@ -27,8 +27,8 @@ public static class ConfigurationValues
     public static string JwksUri = $"{StsUrl}/.well-known/openid-configuration";
 
     public const string ClientCredentialsResource = "connect/token";
-
     public const string ClientAmr = "private_key_jwt";
+    public const bool PvkUseBearerToken = true; // Use bearer token for API calls until DPoP is implemented
 
     public const string CachedAccessTokenFolder = "../../keys/cached/";
     public const string CachedAccessTokenFilePath = CachedAccessTokenFolder + "access_token_cache.json";
@@ -88,19 +88,26 @@ public static class ConfigurationValues
     // Client IDs:
     // -----------------------------------------------------------------------------------------------------------------
 
-    public const string TestPvkApiClientId = "a1c7bdb1-07be-43cc-b876-95fc5c7aa180"; // This is HelseID client ID
-    public const string ProdPvkApiClientId = ""; // This is HelseID client ID
-    
-    public const string PvkDefinisjonGuid_1 = "56a8756c-49f7-4cb9-bfc0-ba282baf0f83"; 
-    public const string PvkDefinisjonNavn_1 = "Reservasjon mot oppføring i NORPREG";
+    public const string TestPvkApiClientId = "a1c7bdb1-07be-43cc-b876-95fc5c7aa180"; // Defined in current documentation
+    public const string ProdPvkApiClientId = "a1c7bdb1-07be-43cc-b876-95fc5c7aa180"; // This is HelseID client ID
 
-    public const string PvkTypePi = "reservasjon"; // reservasjon, samtykke, tilgangsbegrensning
+    // public const string TestPvkApiClientId = "5aee1830-29f5-4f7f-8927-a20ee9fb4125"; // This is the OLD client ID for test
+
+    public const string PvkDefinisjonGuid_1 = "56a8756c-49f7-4cb9-bfc0-ba282baf0f83"; // Defined in current documentation
+    public const string PvkDefinisjonNavn_1 = "Reservasjon mot oppføring i NORPREG"; // Defined in current documentation
+
+    // public const string PvkDefinisjonGuid_1 = "2c11f0ca-7270-43f1-a473-bac325feb3f6"; // Defined in current documentation
+    // public const string PvkDefinisjonNavn_1 = "Proton- og stråleregister samtykke"; // Defined in current documentation
+
+    public const string PvkTypePi = "reservasjon"; // Defined in current documentation
+    // public const string PvkTypePi = "samtykke"; // This is the OLD version for test
 
     // Same for test and test-inet
     public static string PvkApiClientId = environment == "prod" ? ProdPvkApiClientId : TestPvkApiClientId;
 
-    public const string TestPvkPartKode = "norpreg";
-    public const string ProdPvkPartKode = "norpreg";
+    public const string TestPvkPartKode = "norpreg"; // Defined in current documentation
+    public const string ProdPvkPartKode = "norpreg"; // Defined in current documentation
+    // public const string TestPvkPartKode = "prostraa"; // This is the OLD version for test
 
     // Same for test and test-inet
     public static string PvkPartKode = environment == "prod" ? ProdPvkPartKode : TestPvkPartKode;
@@ -110,15 +117,15 @@ public static class ConfigurationValues
     public const string KodelisteDbName =  "kodeliste";
 
     // Switch to user-based login?
-    public static string KodelisteUsername = Environment.GetEnvironmentVariable("KodelisteUsername"); // "cs";
-    public static string KodelistePassword = Environment.GetEnvironmentVariable("KodelistePassword"); // "InitializeComponent547";
-    public static string KodelisteAesKey = "AesKeyForTest"; // Environment.GetEnvironmentVariable("KodelisteAesKey");
+    public static string? KodelisteUsername = Environment.GetEnvironmentVariable("KodelisteUsername"); // "cs";
+    public static string? KodelistePassword = Environment.GetEnvironmentVariable("KodelistePassword"); // "InitializeComponent547";
+    public static string? KodelisteAesKey = "AesKeyForTest"; // Environment.GetEnvironmentVariable("KodelisteAesKey");
 
     // TODO: add correct URLs when REDCap setup is complete
     public static string RedcapNorpregUrl = "redcap.helse-nord.no/api/";
     public static string RedcapKrestUrl = "redcap.helse-bergen.no/api/";
 
-    public static readonly Dictionary<string, string> RedcapApiToken = new()
+    public static readonly Dictionary<string, string?> RedcapApiToken = new()
     {
         { "NORPREG", Environment.GetEnvironmentVariable("RedcapNorpregApiToken") },
         { "KREST-OUS", Environment.GetEnvironmentVariable("RedcapKrestOusApiToken") },
@@ -126,7 +133,7 @@ public static class ConfigurationValues
     };
 
     public static string TargetUrl = ConfigurationValues.RedcapNorpregUrl;
-    public static string TargetApiToken = ConfigurationValues.RedcapApiToken["NORPREG"];
+    public static string? TargetApiToken = ConfigurationValues.RedcapApiToken["NORPREG"];
 
     public static string GetPrivateKey()
     {

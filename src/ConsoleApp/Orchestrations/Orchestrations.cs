@@ -137,6 +137,15 @@ namespace PvkBroker.ConsoleApp
 
             return reservationDelta;
         }
+
+        public Task AddPatientKeyInPvkEvents(List<SimplePvkEvent> pvkEvents)
+        {
+            foreach (var eventItem in pvkEvents)
+            {
+                eventItem.PatientKey = _kodeliste.GetPatientKey(eventItem.PatientID);
+            }
+            return Task.CompletedTask;
+        }
         */
 
         public async Task<List<SimplePvkEvent>> CallPvkAndParseResponse()
@@ -154,8 +163,8 @@ namespace PvkBroker.ConsoleApp
             string accessToken = await _accessTokenCaller.GetAccessToken();
             ClaimsPrincipal principal = await _accessTokenCaller.ValidateAccessTokenAsync(accessToken);
 
-            string response = await _pvkCaller.CallApiSettInnbyggersPersonvernInnstilling(accessToken, jsonPath);
-            return response;
+            bool success = await _pvkCaller.CallApiSettInnbyggersPersonvernInnstilling(accessToken, jsonPath);
+            return $"Success? {success}";
         }
     }
 }

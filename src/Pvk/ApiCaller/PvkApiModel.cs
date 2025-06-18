@@ -2,6 +2,7 @@ using System.Text.Json;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using System.IO;
+using System.Text;  
 using Serilog;
 
 using PvkBroker.Configuration;
@@ -18,15 +19,15 @@ public class ApiResponseHentInnbyggere
 	public string? partKode { get; set; } //  norpreg
 	public string? typePi { get; set; } // samtykke, reservasjon, tilgangsbegrensning
 	public ReFasteMetadata? reFasteMetadata { get; set; } // faste metedata for 
-    public string? pagingReference { get; set; } // Dersom den har verdien 0, trenger det ikke å gjøres flere kall. Dersom annen verdi, må det gjøres etterfølgende kall med angitt pagingReference.
+    public required string pagingReference { get; set; } // Dersom den har verdien 0, trenger det ikke å gjøres flere kall. Dersom annen verdi, må det gjøres etterfølgende kall med angitt pagingReference.
 
-    public List<Pi>? personvernInnstillinger { get; set; }
+    public required List<Pi> personvernInnstillinger { get; set; }
 }
 
 public class Pi
 {
-	public string? innbyggerFnr { get; set; } // Fødselsnummer eller D-nummer
-	public int? sekvensnummer { get; set; } // Sekvensnummer på innbyggerens innstilling for denne definisjonen -- starter på 1, og økes for hver gang den endres
+	public required string innbyggerFnr { get; set; } // Fødselsnummer eller D-nummer
+	public required int sekvensnummer { get; set; } // Sekvensnummer på innbyggerens innstilling for denne definisjonen -- starter på 1, og økes for hver gang den endres
 	public DateTime opprettetTidspunkt { get; set; } // Når PI første gang ble satt
 	public DateTime sistEndretTidspunkt { get; set; } // Når PI sist ble endret
 }
@@ -67,10 +68,17 @@ public class ApiRequestSettInnbygger
 // Simplification of the response with PatientKey included
 public class SimplePvkEvent
 {
-    public string PatientID { get; set; }
+    public required string PatientID { get; set; }
 	public string? PatientKey { get; set; }
-	public bool IsReserved { get; set; }
-    public DateTime EventTime { get; set; }
+	public required bool IsReserved { get; set; }
+    public required DateTime EventTime { get; set; }
+}
+
+public class ApiResult<T>
+{
+    public bool Success { get; set; }
+    public string? ErrorMessage { get; set; }
+    public T? Data { get; set; }
 }
 
 public class ResponseParser
@@ -101,6 +109,7 @@ public class ResponseParser
 
     public static List<SimplePvkEvent> ParseResponse(ApiResponseHentInnbyggere apiResponse)
     {
+
         var pvkEvents = new List<SimplePvkEvent>();
         foreach (var eventItem in apiResponse.personvernInnstillinger)
         {
@@ -140,7 +149,7 @@ public class SettInnbyggerJsonReader
 
         try
         {
-            string json = await File.ReadAllTextAsync(filePath);
+            string json = await File.ReadAllTextAsync(filePath, Encoding.UTF8);
             var input = JsonSerializer.Deserialize<InputDataSettInnbygger>(json);
 
             var payload = new ApiRequestSettInnbygger

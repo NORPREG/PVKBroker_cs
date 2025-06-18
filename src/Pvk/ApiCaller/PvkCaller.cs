@@ -1,27 +1,27 @@
-using System.Net.Http.Headers;
+using Azure;
+using HelseId.Samples.Common.Configuration;
+// FROM DLL
+using HelseId.Samples.Common.Endpoints;
+using HelseId.Samples.Common.Interfaces.JwtTokens;
+using HelseId.Samples.Common.JwtTokens;
+using HelseId.Samples.Common.Models;
 using IdentityModel.Client;
-
+using Microsoft.OpenApi.Validations;
 using PvkBroker.Configuration;
 using PvkBroker.HelseId.ClientCredentials.Client;
 using PvkBroker.HelseId.ClientCredentials.Configuration;
-
-// FROM DLL
-using HelseId.Samples.Common.Endpoints;
-using HelseId.Samples.Common.JwtTokens;
-using HelseId.Samples.Common.Interfaces.JwtTokens;
-using HelseId.Samples.Common.Configuration;
-using HelseId.Samples.Common.Models;
-using System.Net.Http;
+using Serilog;
 using System;
+using System.Net.Http;
+using System.Net.Http.Headers;
 using System.Text;
 using System.Text.Json; 
-using Serilog;
 
 namespace PvkBroker.Pvk.ApiCaller;
 
 public class PvkCaller
 {
-    private readonly IDPoPProofCreator? _idPoPProofCreator;
+    private readonly IDPoPProofCreator _idPoPProofCreator;
     private readonly HelseIdConfiguration HelseIdConfigurationValues;
     private readonly IHttpClientFactory _httpClientFactory;
 
@@ -46,6 +46,15 @@ public class PvkCaller
         var request = new HttpRequestMessage(method, url);
         var dPopProof = _idPoPProofCreator.CreateDPoPProof(url, httpMethod, accessToken: accessToken);
         request.SetDPoPToken(accessToken, dPopProof);
+
+        // Set the Authorization header with the access token
+        // This is because PVK doesn't implement DPoP yet ...
+
+        if (ConfigurationValues.PvkUseBearerToken)
+        {
+            request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
+        }
+
 
         return request;
      }
@@ -72,8 +81,19 @@ public class PvkCaller
         
             var request = CreateHttpRequestMessage(accessToken, url, "GET");
 
-            var responseBody = await SendRequestAndHandleResponse(request);
-            var jsonResponse = ResponseParser.ParseApiResponseHentInnbyggere(responseBody);
+            var response = await SendRequestAndHandleResponse(request);
+
+            if (!response.Success)
+            {
+                Log.Error("Error in PVK HTTP response: {ErrorMessage}", response.ErrorMessage);
+                if (allEvents.Count > 0)
+                {
+                    Log.Warning("PVK error, but some events were already collected. Returning collected events.");
+                }
+                return allEvents;
+            }
+
+            var jsonResponse = ResponseParser.ParseApiResponseHentInnbyggere(response.Data);
             var pageEvents = ResponseParser.ParseResponse(jsonResponse);
 
             allEvents.AddRange(pageEvents);
@@ -87,7 +107,7 @@ public class PvkCaller
         return allEvents;
     }
 
-    public async Task<string> CallApiSettInnbyggersPersonvernInnstilling(string accessToken, string jsonPath)
+    public async Task<bool> CallApiSettInnbyggersPersonvernInnstilling(string accessToken, string jsonPath)
     {
         Console.WriteLine("CallApiSettInnbyggersPersonvernInnstilling");
 
@@ -103,6 +123,7 @@ public class PvkCaller
         var options = new JsonSerializerOptions
         {
             DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull,
+            Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping
         };
 
         var json = JsonSerializer.Serialize(payload, options);
@@ -113,14 +134,14 @@ public class PvkCaller
 
         Console.WriteLine("Sending request to PVK API to set personverninnstilling for innbygger.");
 
-        // var responseBody = await SendRequestAndHandleResponse(request);
-        string responseBody = "sasd";
+        var response = await SendRequestAndHandleResponse(request);
         
-        if (responseBody == null)
+        if (!response.Success)
         {
-            throw new Exception("Failed to set personverninnstilling for innbygger.");
+            Log.Error("Error in PVK HTTP response: {ErrorMessage}", response.ErrorMessage);
         }
-        return responseBody;
+
+        return response.Success;
     }
 
     private static HelseIdConfiguration SetUpHelseIdConfiguration()
@@ -128,32 +149,6 @@ public class PvkCaller
         var result = HelseIdSamplesConfiguration.ClientCredentialsClient;
 
         return result;
-    }
-
-    public static async Task LogHttpRequestToConsole(HttpRequestMessage request)
-    {
-        if (request.Content != null)
-        {
-            // Les originalt innhold og kopier headers
-            var originalContent = request.Content;
-            var buffer = await originalContent.ReadAsByteArrayAsync();
-            var contentString = System.Text.Encoding.UTF8.GetString(buffer);
-
-            Console.WriteLine("Body:");
-            Console.WriteLine(contentString);
-
-            // Lag nytt innhold
-            var newContent = new ByteArrayContent(buffer);
-
-            // Kopier over gamle headers
-            foreach (var header in originalContent.Headers)
-            {
-                newContent.Headers.TryAddWithoutValidation(header.Key, header.Value);
-            }
-
-            // Sett nytt innhold tilbake
-            request.Content = newContent;
-        }
     }
 
     public static async Task LogHttpResponseToConsole(HttpResponseMessage response)
@@ -183,9 +178,9 @@ public class PvkCaller
         Console.WriteLine("------------------------");
     }
 
-    public async Task<string?> SendRequestAndHandleResponse(HttpRequestMessage request)
+    public async Task<ApiResult<string>> SendRequestAndHandleResponse(HttpRequestMessage request)
     {
-        await LogHttpRequestToConsole(request);
+        // await DumpHttpRequestToConsole(request);
         var httpClient = _httpClientFactory.CreateClient();
         var response = await httpClient.SendAsync(request);
         await LogHttpResponseToConsole(response);
@@ -194,14 +189,64 @@ public class PvkCaller
         {
             Log.Information("Successful response from PVK API.");
             var responseBody = await response.Content.ReadAsStringAsync();
-            return responseBody;
+
+            var responseObj = new ApiResult<string>
+            {
+                Success = true,
+                Data = responseBody
+            };
+
+            return responseObj;
 
         }
         else
-        {
-            // handle failure
-            Log.Error("Error in PVK HTTP response: {@response}", response);
-            return null;
+        {            
+            var responseObj = new ApiResult<string> {
+                Success = false,
+                ErrorMessage = $"Error in PVK HTTP response: {response.StatusCode} - {response.ReasonPhrase}"
+            };
+
+            return responseObj;
         }
+    }
+
+    private async Task DumpHttpRequestToConsole(HttpRequestMessage request)
+    {
+        var curl = new StringBuilder();
+
+        curl.Append("curl");
+
+        // Metode
+        if (request.Method != HttpMethod.Get)
+        {
+            curl.Append($" -X {request.Method.Method}");
+        }
+
+        // Headers
+        foreach (var header in request.Headers)
+        {
+            foreach (var value in header.Value)
+            {
+                curl.Append($" -H \"{header.Key}: {value}\"");
+            }
+        }
+
+        // Body (hvis POST)
+        if (request.Content != null)
+        {
+            var body = await request.Content.ReadAsStringAsync();
+            var contentType = request.Content.Headers.ContentType?.ToString();
+            if (!string.IsNullOrEmpty(contentType))
+            {
+                curl.Append($" -H \"Content-Type: {contentType}\"");
+            }
+            curl.Append($" --data '{body}'");
+        }
+
+        // URL
+        curl.Append($" \"{request.RequestUri}\"");
+
+        Console.WriteLine("\n--- CURL COMMAND ---\n");
+        Console.WriteLine(curl.ToString());
     }
 }

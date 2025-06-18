@@ -21,7 +21,14 @@ namespace PvkBroker.Tools
             if (parts.Length != 2)
                 throw new ArgumentException("ivCipher må være på formatet 'iv:cipher'");
 
-            var aes_key_ascii = ConfigurationValues.KodelisteAesKey;
+            string? aes_key_ascii = ConfigurationValues.KodelisteAesKey;
+
+            if (string.IsNullOrWhiteSpace(aes_key_ascii))
+            {
+                Log.Error("Kodeliste AES key is not set in configuration. Cannot decrypt.");
+                throw new InvalidOperationException("Kodeliste AES key is not set in configuration. Cannot decrypt.");
+            }
+
             byte[] key = Encoding.ASCII.GetBytes(aes_key_ascii);
             byte[] iv = Convert.FromBase64String(parts[0]);
             byte[] cipherText = Convert.FromBase64String(parts[1]);
@@ -41,7 +48,14 @@ namespace PvkBroker.Tools
 
         public static string Encrypt(string plaintext)
         {
-            var aes_key_ascii = ConfigurationValues.KodelisteAesKey;
+            string? aes_key_ascii = ConfigurationValues.KodelisteAesKey;
+
+            if (string.IsNullOrWhiteSpace(aes_key_ascii))
+            {
+                Log.Error("Kodeliste AES key is not set in configuration. Cannot encrypt.");
+                throw new InvalidOperationException("Kodeliste AES key is not set in configuration. Cannot encrypt.");
+            }
+
             byte[] key = Encoding.ASCII.GetBytes(aes_key_ascii);
             using var aes = Aes.Create();
             aes.Key = key;
