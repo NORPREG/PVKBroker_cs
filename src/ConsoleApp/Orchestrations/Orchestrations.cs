@@ -150,7 +150,17 @@ namespace PvkBroker.ConsoleApp
 
         public async Task<List<SimplePvkEvent>> CallPvkAndParseResponse()
         {
-            string accessToken = await _accessTokenCaller.GetAccessToken();
+            string? accessToken = await _accessTokenCaller.GetAccessToken();
+
+            // sleep 1 sec to ensure token is ready
+            await Task.Delay(1000);
+
+            if (string.IsNullOrEmpty(accessToken))
+            {
+                Log.Error("Access token is null or empty. Cannot call PVK API.");
+                throw new InvalidOperationException("Access token is null or empty. Cannot call PVK API.");
+            }
+
             ClaimsPrincipal principal = await _accessTokenCaller.ValidateAccessTokenAsync(accessToken);
 
             List<SimplePvkEvent> newPvkEvents = await _pvkCaller.CallApiHentInnbyggereAktivePiForDefinisjon(accessToken);
@@ -158,13 +168,23 @@ namespace PvkBroker.ConsoleApp
             return newPvkEvents;
         }
 
-        public async Task<string> CallPvkAndSetDefinition(string jsonPath)
+        public async Task<ApiResult<string>> CallPvkAndSetDefinition(string jsonPath)
         {
-            string accessToken = await _accessTokenCaller.GetAccessToken();
+            string? accessToken = await _accessTokenCaller.GetAccessToken();
+
+            // sleep 1 sec to ensure token is ready
+            await Task.Delay(1000);
+
+            if (string.IsNullOrEmpty(accessToken))
+            {
+                Log.Error("Access token is null or empty. Cannot call PVK API.");
+                throw new InvalidOperationException("Access token is null or empty. Cannot call PVK API.");
+            }
+
             ClaimsPrincipal principal = await _accessTokenCaller.ValidateAccessTokenAsync(accessToken);
 
-            bool success = await _pvkCaller.CallApiSettInnbyggersPersonvernInnstilling(accessToken, jsonPath);
-            return $"Success? {success}";
+            ApiResult<string> response = await _pvkCaller.CallApiSettInnbyggersPersonvernInnstilling(accessToken, jsonPath);
+            return response;
         }
     }
 }

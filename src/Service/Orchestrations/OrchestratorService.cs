@@ -2,6 +2,7 @@ using Microsoft.Extensions.Hosting;
 using System;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Collections.Generic;
 using Serilog;
 
 using PvkBroker.Configuration;
@@ -63,17 +64,24 @@ public class OrchestratorService : BackgroundService
         {
             _kodeliste.ReloadCache();
 
-            List<SimplePvkEvent> newPvkEvents = _orchestrator.CallPvkAndParseResponse();
+            await _orchestration.HandleNewPatients();
+
+            List<SimplePvkEvent> newPvkEvents = await _orchestration.CallPvkAndParseResponse();
 
             // Get reservations from Kodeliste database BEFORE newest sync
-            var reservationDelta = _orchestration.CompareCurrentReservationWithNewPvkEvents(patientReservations, newPvkEvents);
+            var reservationDelta = _orchestration.CompareCurrentReservationWithNewPvkEvents(newPvkEvents);
+
+            if (reservationDelta.NewReservations.Count == 0 && reservationDelta.WithdrawnReservations.Count == 0)
+            {
+                Log.Information("No new or withdrawn reservations found. Skipping further processing.");
+                return;
+            }
 
             // Make row in PvkSync table, get index for linking PvkEvent rows
             string pvkSyncId = _kodeliste.CreatePvkSync(reservationDelta);
 
             await _orchestration.HandleNewReservations(reservationDelta.NewReservations, pvkSyncId);
             await _orchestration.HandleWithdrawnReservations(reservationDelta.WithdrawnReservations, pvkSyncId)
-            await _orchestration.HandleNewPatients();
 
             Log.Information("OrchestratorService completed work successfully.");
         }

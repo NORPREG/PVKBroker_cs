@@ -96,8 +96,11 @@ public static class ConfigurationValues
     public const string PvkDefinisjonGuid_1 = "56a8756c-49f7-4cb9-bfc0-ba282baf0f83"; // Defined in current documentation
     public const string PvkDefinisjonNavn_1 = "Reservasjon mot oppføring i NORPREG"; // Defined in current documentation
 
-    // public const string PvkDefinisjonGuid_1 = "2c11f0ca-7270-43f1-a473-bac325feb3f6"; // Defined in current documentation
-    // public const string PvkDefinisjonNavn_1 = "Proton- og stråleregister samtykke"; // Defined in current documentation
+    // public const string PvkDefinisjonGuid_1 = "2c11f0ca-7270-43f1-a473-bac325feb3f6"; // This is the OLD Guid
+    // public const string PvkDefinisjonNavn_1 = "Proton- og stråleregister samtykke"; // This is the OLD Guid
+
+    // public const string PvkDefinisjonGuid_1 = "2c11f0ca-7270-43f1-a473-bac36354eb3f6"; // This is WRONG Guid
+    // public const string PvkDefinisjonNavn_1 = "Proton- og stråleregister samgykke"; // This is WRONG Guid
 
     public const string PvkTypePi = "reservasjon"; // Defined in current documentation
     // public const string PvkTypePi = "samtykke"; // This is the OLD version for test

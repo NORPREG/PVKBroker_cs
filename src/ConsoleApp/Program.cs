@@ -53,16 +53,25 @@ namespace PvkBroker.ConsoleApp
                         DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
                     };
 
+
                     string jsonOutput = JsonSerializer.Serialize(pvkResponse, options);
-                    Console.WriteLine(jsonOutput);
+                    if (pvkResponse.Count > 0)
+                    {
+                        Console.WriteLine("Alle PVK-hendelser i JSON-format:");
+                        Console.WriteLine(jsonOutput);
+                    }
                 }
 
                 else if (args.Length == 1)
                 {
-                    Console.WriteLine("Programmet kjørt med argument, henter data fra angitt JSON fil og setter status deretter.");
+                    Console.WriteLine("Programmet kjørt med ett argument, henter data fra angitt JSON fil og setter status deretter.");
 
-                    string pvkResponse = await _orchestration.CallPvkAndSetDefinition(args[0]);
-                    Console.WriteLine("PVK respons: " + pvkResponse);
+                    string filepath = args[0];
+                    ApiResult<string> pvkResponse = await _orchestration.CallPvkAndSetDefinition(filepath);
+                    Console.WriteLine("\nPVK success: " + pvkResponse.Success);
+                    Console.WriteLine("PVK response: " + pvkResponse.Data);
+
+
                 }
                 else
                 {
@@ -76,7 +85,6 @@ namespace PvkBroker.ConsoleApp
         }
     }
 }
-
 
 // Inline DI for KodelisteDbContext
 

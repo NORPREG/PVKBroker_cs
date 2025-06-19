@@ -62,7 +62,7 @@ public class PvkCaller
     public async Task<List<SimplePvkEvent>> CallApiHentInnbyggereAktivePiForDefinisjon(string accessToken)
     {
         var allEvents = new List<SimplePvkEvent>();
-        string pagingReference = "0";
+        int pagingReference = 0;
 
         do
         {
@@ -85,7 +85,7 @@ public class PvkCaller
 
             if (!response.Success)
             {
-                Log.Error("Error in PVK HTTP response: {ErrorMessage}", response.ErrorMessage);
+                HandleError(response);
                 if (allEvents.Count > 0)
                 {
                     Log.Warning("PVK error, but some events were already collected. Returning collected events.");
@@ -93,7 +93,29 @@ public class PvkCaller
                 return allEvents;
             }
 
+            if (string.IsNullOrEmpty(response.Data))
+            {
+                Log.Warning("Received empty response from PVK API. No events to process.");
+                return allEvents;
+            }
+
             var jsonResponse = ResponseParser.ParseApiResponseHentInnbyggere(response.Data);
+            
+            string prettyJson = JsonSerializer.Serialize(jsonResponse, new JsonSerializerOptions
+            {
+                WriteIndented = true,
+                PropertyNamingPolicy = JsonNamingPolicy.CamelCase
+            });
+
+            Console.WriteLine($"Respons før tolkning:\n {prettyJson}\n\n");
+
+
+            if (jsonResponse == null)
+            {
+                Log.Error("Failed to parse JSON response from PVK API. Response: {ResponseData}", response.Data);
+                return allEvents;
+            }
+
             var pageEvents = ResponseParser.ParseResponse(jsonResponse);
 
             allEvents.AddRange(pageEvents);
@@ -102,21 +124,17 @@ public class PvkCaller
             // sleep 100 milliseconds to avoid hitting rate limits
             await Task.Delay(100);
 
-        } while (pagingReference != "0");
+        } while (pagingReference != 0);
 
         return allEvents;
     }
 
-    public async Task<bool> CallApiSettInnbyggersPersonvernInnstilling(string accessToken, string jsonPath)
+    public async Task<ApiResult<string>> CallApiSettInnbyggersPersonvernInnstilling(string accessToken, string jsonPath)
     {
-        Console.WriteLine("CallApiSettInnbyggersPersonvernInnstilling");
-
         string systemUrl = ConfigurationValues.PvkSystemUrl;
         string baseUrl = ConfigurationValues.PvkSettInnbyggersPersonvernInnstillingUrl;
         var url = $"{systemUrl}{baseUrl}";
         var request = CreateHttpRequestMessage(accessToken, url, "POST");
-
-        Console.WriteLine("Setting personverninnstilling for innbygger using JSON file: " + jsonPath);
 
         ApiRequestSettInnbygger payload = await SettInnbyggerJsonReader.ReadJsonFile(jsonPath);
 
@@ -128,20 +146,41 @@ public class PvkCaller
 
         var json = JsonSerializer.Serialize(payload, options);
 
-        Console.WriteLine("JSON payload to be sent: " + json);
-
         request.Content = new StringContent(json, Encoding.UTF8, "application/json");
 
-        Console.WriteLine("Sending request to PVK API to set personverninnstilling for innbygger.");
-
         var response = await SendRequestAndHandleResponse(request);
-        
+
         if (!response.Success)
         {
-            Log.Error("Error in PVK HTTP response: {ErrorMessage}", response.ErrorMessage);
+            HandleError(response, payload);
+            return response;     
         }
 
-        return response.Success;
+        if (string.IsNullOrEmpty(response.Data))
+        {
+            Log.Warning("Received empty response from PVK API. No events to process.");
+            return response;
+        }
+
+        var parsedResponse = ResponseParser.ParseApiResponseSettInnbygger(response.Data);
+
+        if (parsedResponse == null)
+        {
+            Log.Error("Failed to parse JSON response from PVK API. Response: {ResponseData}", response.Data);
+            return new ApiResult<string>
+            {
+                Success = false,
+                ErrorMessage = "Failed to parse JSON response from PVK API."
+            };
+        }
+
+        if (parsedResponse.instansEndret == "ikkeEndret")
+        {
+            Log.Information("PVK response indicates no change in instance. No action taken.");
+            Console.WriteLine($"PVK response indicates no change in instance for PatientID {payload.innbyggerFnr}. No action taken.");
+        }
+
+        return response;
     }
 
     private static HelseIdConfiguration SetUpHelseIdConfiguration()
@@ -149,6 +188,31 @@ public class PvkCaller
         var result = HelseIdSamplesConfiguration.ClientCredentialsClient;
 
         return result;
+    }
+
+    public void HandleError(ApiResult<string> response, ApiRequestSettInnbygger? payload = null)
+    {
+        Log.Error("Error in PVK HTTP response: {ErrorMessage}", response.ErrorMessage);
+
+        if (!string.IsNullOrEmpty(response.Data))
+        {
+            var parsedError = ResponseParser.ParseApiResponseSettInnbyggerError(response.Data);
+            Log.Error("PVK API return error {Code}: {Message}", parsedError?.code, parsedError?.message);
+
+            if (parsedError?.code == "EPVK-101518")
+            {
+                Console.WriteLine($"Fant ingen innbygger med innbyggerFnr {payload?.innbyggerFnr}.");
+            }
+            else if (parsedError?.code == "EPVK-101500")
+            {
+                Console.WriteLine(parsedError?.message);
+                Console.WriteLine("(sjekk at du har riktig definisjonGuid / partKode i konfigurasjonen.)");
+            }
+            else
+            {
+                Console.WriteLine(parsedError?.message);
+            }
+        }
     }
 
     public static async Task LogHttpResponseToConsole(HttpResponseMessage response)
@@ -182,31 +246,60 @@ public class PvkCaller
     {
         // await DumpHttpRequestToConsole(request);
         var httpClient = _httpClientFactory.CreateClient();
-        var response = await httpClient.SendAsync(request);
-        await LogHttpResponseToConsole(response);
 
-        if (response.IsSuccessStatusCode)
-        {
-            Log.Information("Successful response from PVK API.");
-            var responseBody = await response.Content.ReadAsStringAsync();
+        try {
 
-            var responseObj = new ApiResult<string>
+            httpClient.Timeout = TimeSpan.FromSeconds(10);
+            var response = await httpClient.SendAsync(request);
+            await LogHttpResponseToConsole(response);
+
+            if (response.IsSuccessStatusCode)
             {
-                Success = true,
-                Data = responseBody
-            };
+                Log.Information("Successful response from PVK API.");
+                var responseBody = await response.Content.ReadAsStringAsync();
 
-            return responseObj;
+                var responseObj = new ApiResult<string>
+                {
+                    Success = true,
+                    Data = responseBody
+                };
 
+                return responseObj;
+
+            }
+            else
+            {
+                var responseBody = await response.Content.ReadAsStringAsync();
+
+                Log.Error("Feil i svar fra PVK: {StatusCode} - {ReasonPhrase}", response.StatusCode, response.ReasonPhrase);
+
+                var responseObj = new ApiResult<string> {
+                    Success = false,
+                    ErrorMessage = $"Error in PVK HTTP response: {response.StatusCode} - {response.ReasonPhrase}",
+                    Data = responseBody
+                };
+
+                return responseObj;
+            }
         }
-        else
-        {            
-            var responseObj = new ApiResult<string> {
+       catch (HttpRequestException ex)
+        {
+            Log.Error(ex, "HTTP request failed: {Message}", ex.Message);
+            Console.WriteLine($"HTTP request failed: {ex.Message}");
+            return new ApiResult<string>
+            {
                 Success = false,
-                ErrorMessage = $"Error in PVK HTTP response: {response.StatusCode} - {response.ReasonPhrase}"
+                ErrorMessage = $"HTTP request failed: {ex.Message}"
             };
-
-            return responseObj;
+        }
+        catch (Exception ex)
+        {
+            Log.Error(ex, "An unexpected error occurred: {Message}", ex.Message);
+            return new ApiResult<string>
+            {
+                Success = false,
+                ErrorMessage = $"An unexpected error occurred: {ex.Message}"
+            };
         }
     }
 

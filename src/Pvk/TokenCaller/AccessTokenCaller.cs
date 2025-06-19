@@ -46,8 +46,10 @@ public class AccessTokenCaller
         var cached = await TokenCacher.GetFromCache();
         if (cached != null)
         {
+            Console.WriteLine("[Gyldig access token funnet, bruker denne]");
             return cached.AccessToken;
         }
+        Console.WriteLine("[Ingen gyldig access token funnet, henter ny fra HelseID STS]");
 
         var httpClient = _httpClientFactory.CreateClient();
         var tokenResponse = await _client.GetAccessToken(httpClient);
@@ -58,8 +60,6 @@ public class AccessTokenCaller
         }
 
         string accessToken = tokenResponse.AccessToken;
-
-        Console.WriteLine($"Expires in: {tokenResponse.ExpiresIn} seconds");
 
         var expirationTime = DateTime.UtcNow.AddSeconds(tokenResponse.ExpiresIn);
 

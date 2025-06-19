@@ -6,6 +6,8 @@ using System.Text;
 using Serilog;
 
 using PvkBroker.Configuration;
+using Microsoft.AspNetCore.StaticFiles;
+using Microsoft.Identity.Client;
 
 namespace PvkBroker.Pvk.ApiCaller;
 
@@ -19,7 +21,7 @@ public class ApiResponseHentInnbyggere
 	public string? partKode { get; set; } //  norpreg
 	public string? typePi { get; set; } // samtykke, reservasjon, tilgangsbegrensning
 	public ReFasteMetadata? reFasteMetadata { get; set; } // faste metedata for 
-    public required string pagingReference { get; set; } // Dersom den har verdien 0, trenger det ikke å gjøres flere kall. Dersom annen verdi, må det gjøres etterfølgende kall med angitt pagingReference.
+    public required int pagingReference { get; set; } // Dersom den har verdien 0, trenger det ikke å gjøres flere kall. Dersom annen verdi, må det gjøres etterfølgende kall med angitt pagingReference.
 
     public required List<Pi> personvernInnstillinger { get; set; }
 }
@@ -34,12 +36,12 @@ public class Pi
 
 public class ReFasteMetadata
 {
-    public OmfangElementer? omfangElementer { get; set; } // GUID
+    public List<OmfangElementer>? omfangElementer { get; set; } // GUID
 }
 
 public class OmfangElementer
 {
-	public string? omfangKode { get; set; } //  UO
+	public string? omfangKode { get; set; } //  OF
 	public string? logiskOmfang { get; set; } //  Angitte
 	public string? presisering { get; set; } //  Direkte personidentifiserende opplysninger
 }
@@ -63,6 +65,19 @@ public class ApiRequestSettInnbygger
     public string? tidspunkt { get; set; } // ISO 8601 format, e.g. "2023-10-01T12:00:00Z"
     public string? signertBevisMimeType { get; set; } // image/png, image/jpeg, image/bmp, application/pdf
     public string? signertBevisInnhold { get; set; } // Base64 encoded content of the signed proof document
+}
+
+public class ApiResponseSettInnbygger
+{
+    public required string returKode { get; set; } // ok; ikkeOk
+    public required string instansEndret { get; set; } // endret; ikkeEndret
+}
+
+public class ApiResponseSettInnbyggerError
+{
+    public required string code { get; set; }
+    public required string message { get; set; } 
+    public required string errorCategory { get; set; }
 }
 
 // Simplification of the response with PatientKey included
@@ -103,6 +118,48 @@ public class ResponseParser
         catch (JsonException ex)
         {
             Log.Error("Error deserializing API response: {@ex}", ex);
+            return null;
+        }
+    }
+
+    public static ApiResponseSettInnbygger? ParseApiResponseSettInnbygger(string responseBody)
+    {
+        var jsonOptions = new JsonSerializerOptions
+        {
+            PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+        };
+        if (string.IsNullOrEmpty(responseBody)) {
+            Log.Error("Received empty response body from API.");
+            return null;
+        }
+        try
+        {
+            return JsonSerializer.Deserialize<ApiResponseSettInnbygger>(responseBody, jsonOptions);
+        }
+        catch (JsonException ex)
+        {
+            Log.Error("Error deserializing API response: {@ex}", ex);
+            return null;
+        }
+    }
+
+    public static ApiResponseSettInnbyggerError? ParseApiResponseSettInnbyggerError(string responseBody)
+    {
+        var jsonOptions = new JsonSerializerOptions
+        {
+            PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+        };
+        if (string.IsNullOrEmpty(responseBody)) {
+            Log.Error("Received empty response body from API.");
+            return null;
+        }
+        try
+        {
+            return JsonSerializer.Deserialize<ApiResponseSettInnbyggerError>(responseBody, jsonOptions);
+        }
+        catch (JsonException ex)
+        {
+            Log.Error("Error deserializing API error response: {@ex}", ex);
             return null;
         }
     }
@@ -154,21 +211,28 @@ public class SettInnbyggerJsonReader
 
             var payload = new ApiRequestSettInnbygger
             {
-                innbyggerFnr = input.innbyggerFnr,
+                innbyggerFnr = input?.innbyggerFnr,
                 definisjonGuid = ConfigurationValues.PvkDefinisjonGuid_1,
                 definisjonNavn = ConfigurationValues.PvkDefinisjonNavn_1,
                 partKode = ConfigurationValues.PvkPartKode,
                 typePi = ConfigurationValues.PvkTypePi,
-                aktiv = input.aktiv,
-                tidspunkt = input.datetime
+                aktiv = input?.aktiv,
+                tidspunkt = input?.datetime
             };
 
-            if (!string.IsNullOrWhiteSpace(input.pathToBevisInnhold))
+            if (!string.IsNullOrWhiteSpace(input?.pathToBevisInnhold))
             {
                 string resolvedPath = Path.Combine(inputDirectory, input.pathToBevisInnhold);
-                string extension = Path.GetExtension(resolvedPath)?.ToLowerInvariant();
 
-                if (!string.IsNullOrWhiteSpace(extension) && allowedMimeTypes.TryGetValue(extension, out string mime))
+                if (string.IsNullOrEmpty(resolvedPath) || !Path.Exists(resolvedPath))
+                {
+                    Log.Error("Resolved path to bevisInnhold does not exist: {ResolvedPath}", resolvedPath);
+                    throw new FileNotFoundException($"Resolved path does not exist: {resolvedPath}");
+                }
+
+                string? extension = Path.GetExtension(resolvedPath)?.ToLowerInvariant();
+
+                if (!string.IsNullOrWhiteSpace(extension) && allowedMimeTypes.TryGetValue(extension, out string? mime))
                 {
                     if (File.Exists(resolvedPath))
                     {
