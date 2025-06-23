@@ -68,9 +68,18 @@ namespace PvkBroker.ConsoleApp
 
                     string filepath = args[0];
                     ApiResult<string> pvkResponse = await _orchestration.CallPvkAndSetDefinition(filepath);
-                    Console.WriteLine("\nPVK success: " + pvkResponse.Success);
-                    Console.WriteLine("PVK response: " + pvkResponse.Data);
+                    // Console.WriteLine("\nPVK success: " + pvkResponse.Success);
+                    // Console.WriteLine("PVK response: " + pvkResponse.Data);
 
+                    if (pvkResponse.Success)
+                    {
+                        Console.WriteLine("Vellykket endring i PVK.");
+                    }
+
+                    else
+                    {
+                        Console.WriteLine("Feil ved setting av PVK hendelser.");
+                    }
 
                 }
                 else

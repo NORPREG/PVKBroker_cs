@@ -107,8 +107,7 @@ public class PvkCaller
                 PropertyNamingPolicy = JsonNamingPolicy.CamelCase
             });
 
-            Console.WriteLine($"Respons før tolkning:\n {prettyJson}\n\n");
-
+            // Console.WriteLine($"Respons før tolkning:\n {prettyJson}\n\n");
 
             if (jsonResponse == null)
             {
@@ -265,7 +264,6 @@ public class PvkCaller
                 };
 
                 return responseObj;
-
             }
             else
             {
