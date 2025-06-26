@@ -8,7 +8,7 @@
 
     <ItemGroup>
         <ProjectReference Include="..\Configuration\PvkBroker.Configuration.csproj" />
-        <!-- <ProjectReference Include="..\Kodeliste\PvkBroker.Kodeliste.csproj" /> -->
+        <ProjectReference Include="..\Kodeliste\PvkBroker.Kodeliste.csproj" />
         <ProjectReference Include="..\Pvk\PvkBroker.Pvk.csproj" />
         <!-- <ProjectReference Include="..\Redcap\PvkBroker.Redcap.csproj" /> -->
         <ProjectReference Include="..\Tools\PvkBroker.Tools.csproj" />

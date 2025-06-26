@@ -8,7 +8,7 @@ namespace PvkBroker.Configuration;
 
 public static class ConfigurationValues
 {
-    public static string environment = "test";
+    public static string environment = "test-inet";
 
     // The URL for HelseID
     public static string TestStsUrl { get;  } = "https://helseid-sts.test.nhn.no";
@@ -115,9 +115,9 @@ public static class ConfigurationValues
     public const string KodelisteDbName =  "kodeliste";
 
     // Switch to user-based login?
-    public static string? KodelisteUsername = Environment.GetEnvironmentVariable("KodelisteUsername"); // "cs";
-    public static string? KodelistePassword = Environment.GetEnvironmentVariable("KodelistePassword"); // "InitializeComponent547";
-    public static string? KodelisteAesKey = "AesKeyForTest"; // Environment.GetEnvironmentVariable("KodelisteAesKey");
+    public static string? KodelisteUsername = "cs"; //  Environment.GetEnvironmentVariable("KodelisteUsername"); // "cs";
+    public static string? KodelistePassword = "InitializeComponent547"; // Environment.GetEnvironmentVariable("KodelistePassword"); // "InitializeComponent547";
+    public static string? KodelisteAesKey = "dacp1fOy5pFjaOYY1xirQSeONMJnRs8HVHca6r7SNp5SjssqqCpG7MJdP9klhu0M"; // Environment.GetEnvironmentVariable("KodelisteAesKey");
 
     // TODO: add correct URLs when REDCap setup is complete
     public static string RedcapNorpregUrl = "redcap.helse-nord.no/api/";

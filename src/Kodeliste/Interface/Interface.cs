@@ -2,7 +2,9 @@
 using System.Collections.Generic;
 using MySql.Data;
 using MySql.Data.MySqlClient;
+using Microsoft.EntityFrameworkCore;
 using Serilog;
+using System.Linq;  
 
 using PvkBroker.Configuration;
 using System;
@@ -55,7 +57,7 @@ namespace PvkBroker.Kodeliste
         {
             var pastientReservations = new List<PatientReservation>();
 
-            var patients = _context.Patient
+            var patients = _context.Patients
                 .Where(p => p.pvk_events.Any())
                 .Include(p => p.pvk_events)
                 .ToList();

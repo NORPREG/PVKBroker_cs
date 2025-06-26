@@ -4,7 +4,7 @@ using Microsoft.Extensions.Logging;
 using PvkBroker.Configuration;
 using PvkBroker.Pvk.ApiCaller;
 using PvkBroker.Pvk.TokenCaller;
-// using PvkBroker.Kodeliste;
+using PvkBroker.Kodeliste;
 // using PvkBroker.Redcap;
 using PvkBroker.Tools;
 using Serilog;
@@ -34,6 +34,17 @@ namespace PvkBroker.ConsoleApp
             services.AddSingleton<Encryption>();
             services.AddSingleton<Orchestrations>();
             services.AddHttpClient();
+
+            services.AddDbContext<KodelisteDbContext>(options =>
+            {
+                string Server = ConfigurationValues.KodelisteServer;
+                string DatabaseName = ConfigurationValues.KodelisteDbName;
+                string UserName = ConfigurationValues.KodelisteUsername;
+                string Password = ConfigurationValues.KodelistePassword;
+                string connString = $"Server={Server};Database={DatabaseName};User Id={UserName};Password={Password};";
+                options.UseMySql(connString, ServerVersion.AutoDetect(connString));
+            });
+
 
             var serviceProvider = services.BuildServiceProvider();
 
@@ -100,15 +111,7 @@ namespace PvkBroker.ConsoleApp
 /*
  * Commented out for gradual bootstrapping of the application
  * 
-services.AddDbContext<KodelisteDbContext>(options =>
-{
-    string Server = ConfigurationValues.KodelisteServer;
-    string DatabaseName = ConfigurationValues.KodelisteDbName;
-    string UserName = ConfigurationValues.KodelisteUsername;
-    string Password = ConfigurationValues.KodelistePassword;
-    string connString = $"Server={Server};Database={DatabaseName};Uid={UserName};Password={Password};";
-    options.UseMySql(connString, ServerVersion.AutoDetect(connString));
-});
+
 */
 
 // DI for other services

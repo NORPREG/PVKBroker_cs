@@ -27,7 +27,7 @@ public class Program
                     string DatabaseName = ConfigurationValues.KodelisteDbName;
                     string UserName = ConfigurationValues.KodelisteUsername;
                     string Password = ConfigurationValues.KodelistePassword;
-                    string connString = $"Server={Server};Database={DatabaseName};UserName={UserName};Password={Passoword};"
+                    string connString = $"Server={Server};Database={DatabaseName};User Id={UserName};Password={Password};"
                     options.UseMySql(connString, ServerVersion.AutoDetect(connString));
                 });
 
