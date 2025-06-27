@@ -6,6 +6,8 @@ using System.Text;
 using Serilog;
 
 using PvkBroker.Configuration;
+using PvkBroker.Datamodels;
+
 using Microsoft.AspNetCore.StaticFiles;
 using Microsoft.Identity.Client;
 
@@ -78,15 +80,6 @@ public class ApiResponseSettInnbyggerError
     public required string code { get; set; }
     public required string message { get; set; } 
     public required string errorCategory { get; set; }
-}
-
-// Simplification of the response with PatientKey included
-public class SimplePvkEvent
-{
-    public required string PatientID { get; set; }
-	public string? PatientKey { get; set; }
-	public required bool IsReserved { get; set; }
-    public required DateTime EventTime { get; set; }
 }
 
 public class ApiResult<T>
@@ -172,7 +165,7 @@ public class ResponseParser
         {
             var simpleEvent = new SimplePvkEvent
             {
-                PatientID = eventItem.innbyggerFnr,
+                PatientFnr = eventItem.innbyggerFnr,
                 // PatientKey = _kodeliste.GetPatientKey(eventItem.innbyggerFnr),
                 EventTime = eventItem.sistEndretTidspunkt,
                 IsReserved = true

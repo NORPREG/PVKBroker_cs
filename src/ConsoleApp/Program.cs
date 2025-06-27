@@ -13,6 +13,7 @@ using System.Collections.Generic;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Threading.Tasks;
+using PvkBroker.Datamodels;
 using static IdentityModel.OidcConstants;
 
 namespace PvkBroker.ConsoleApp
@@ -27,34 +28,34 @@ namespace PvkBroker.ConsoleApp
         static async Task MainAsync(string[] args)
         {
             SetupLogging.Initialize();
-
-            var services = new ServiceCollection();
-            services.AddSingleton<AccessTokenCaller>();
-            services.AddSingleton<PvkCaller>();
-            services.AddSingleton<Encryption>();
-            services.AddSingleton<Orchestrations>();
-            services.AddHttpClient();
-
-            services.AddDbContext<KodelisteDbContext>(options =>
-            {
-                string Server = ConfigurationValues.KodelisteServer;
-                string DatabaseName = ConfigurationValues.KodelisteDbName;
-                string UserName = ConfigurationValues.KodelisteUsername;
-                string Password = ConfigurationValues.KodelistePassword;
-                string connString = $"Server={Server};Database={DatabaseName};User Id={UserName};Password={Password};";
-                options.UseMySql(connString, ServerVersion.AutoDetect(connString));
-            });
-
-
+            var services = SetupServices();
             var serviceProvider = services.BuildServiceProvider();
 
+            // Ensuring database exists
+            using (var scope = serviceProvider.CreateScope())
+            {
+                var db = scope.ServiceProvider.GetRequiredService<KodelisteDbContext>();
+                db.Database.EnsureCreated(); // Shift to migration mode later on
+            }
+
+            var _kodeliste = serviceProvider.GetRequiredService<KodelisteInterface>();
             var _orchestration = serviceProvider.GetRequiredService<Orchestrations>();
+
             try
             {
                 if (args.Length == 0)
                 {
                     Console.WriteLine("Programmet kjørt uten argumenter, henter PVK hendelser for alle innbyggere med reservasjon.");
-                    List<SimplePvkEvent> pvkResponse = await _orchestration.CallPvkAndParseResponse();
+
+                    _kodeliste.AddPatient("Test 1", "13116900216");
+                    _kodeliste.AddPatient("Test 2", "01011158117");
+                    _kodeliste.AddPatient("Test 3", "01011270391");
+                    _kodeliste.AddPatient("Test 4", "05031167584");
+                    _kodeliste.AddPatient("Test 6", "12057900499");
+
+                    List<SimplePvkEvent> pvkResponse = new List<SimplePvkEvent> { };
+
+                    // List<SimplePvkEvent> pvkResponse = await _orchestration.CallPvkAndParseResponse();
 
                     Console.WriteLine("Antall hendelser i PVK: " + pvkResponse.Count);
 
@@ -63,7 +64,6 @@ namespace PvkBroker.ConsoleApp
                         WriteIndented = true,
                         DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
                     };
-
 
                     string jsonOutput = JsonSerializer.Serialize(pvkResponse, options);
                     if (pvkResponse.Count > 0)
@@ -103,28 +103,53 @@ namespace PvkBroker.ConsoleApp
                 Console.WriteLine("Feil: " + ex.Message);
             }
         }
+
+        public static ServiceCollection SetupServices()
+        {
+            var services = new ServiceCollection();
+            services.AddSingleton<AccessTokenCaller>();
+            services.AddSingleton<PvkCaller>();
+            services.AddSingleton<Encryption>();
+            services.AddSingleton<Orchestrations>();
+            services.AddSingleton<KodelisteInterface>();
+            services.AddSingleton<PatientIDCacheService>();
+            services.AddHttpClient();
+
+            if (ConfigurationValues.UseSqlite)
+            {
+                services.AddDbContext<KodelisteDbContext>(options =>
+                {
+                    options.UseSqlite($"Data Source={ConfigurationValues.SqliteDatabaseFile};Cache=Shared;");
+                });
+            }
+            else
+            {
+                services.AddDbContext<KodelisteDbContext>(options =>
+                {
+                    string Server = ConfigurationValues.KodelisteServer;
+                    string DatabaseName = ConfigurationValues.KodelisteDbName;
+                    string UserName = ConfigurationValues.KodelisteUsername;
+                    string Password = ConfigurationValues.KodelistePassword;
+                    string connString = $"Server={Server};Database={DatabaseName};User Id={UserName};Password={Password};";
+                    options.UseMySql(connString, ServerVersion.AutoDetect(connString));
+                });
+            }
+
+            return services;
+        }
     }
 }
 
 // Inline DI for KodelisteDbContext
 
-/*
- * Commented out for gradual bootstrapping of the application
- * 
-
-*/
-
 // DI for other services
 
-// services.AddSingleton<PvkBroker.Kodeliste.KodelisteInterface>();
+// 
 // services.AddSingleton<PvkBroker.Redcap.RedcapInterface>();
-
-// services.AddSingleton<PvkBroker.Kodeliste.PatientIDCacheService>();
-
 
 // Bygg
 
-// var _kodeliste = serviceProvider.GetRequiredService<KodelisteInterface>();
+// 
 // _kodeliste.ReloadCache();
 // Get reservations from Kodeliste database BEFORE newest sync
 // var reservationDelta = _orchestration.CompareCurrentReservationWithNewPvkEvents(patientReservations, newPvkEvents);

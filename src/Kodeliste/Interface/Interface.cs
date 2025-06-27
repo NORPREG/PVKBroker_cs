@@ -4,7 +4,9 @@ using MySql.Data;
 using MySql.Data.MySqlClient;
 using Microsoft.EntityFrameworkCore;
 using Serilog;
-using System.Linq;  
+using System.Linq;
+
+using System.Globalization;
 
 using PvkBroker.Configuration;
 using System;
@@ -13,6 +15,7 @@ using System.Data;
 using System.Data.Common;
 using Microsoft.AspNetCore.Routing.Constraints;
 
+using PvkBroker.Datamodels;
 using PvkBroker.Tools;
 
 /*  Workflow when syncing against PVK 
@@ -34,14 +37,6 @@ CHECK - List<ReservationStatus> GetReservedPatients(List<string> list_fnr)
 
 namespace PvkBroker.Kodeliste
 {
-    public class PatientReservation
-    {
-        public string PatientKey { get; set; }
-        public bool IsReserved { get; set; }
-        public DateTime? EventTime { get; set; } // On patient side, not API call time
-        public string DateAdded { get; set; } // Date when the patient was added to KREST
-    }
-
     public class KodelisteInterface
     {
         private readonly PatientIDCacheService _cache;
@@ -80,9 +75,11 @@ namespace PvkBroker.Kodeliste
                         Log.Error("Cannot decrypt is_reserved_aes at key {key}: {@ex}", patient.patient_key, ex);
                     }
                 }
+
+
                 pastientReservations.Add(new PatientReservation
                 {
-                    PatientKey = patient.patient_key,
+                    PatientId = patient.id,
                     IsReserved = isReserved,
                     EventTime = lastEvent?.event_time,
                     DateAdded = patient.dt_added
@@ -96,18 +93,18 @@ namespace PvkBroker.Kodeliste
             var matchingPatientIDs = _cache.GetPatientIdsByFnr(fnrInput);
             if (!matchingPatientIDs.Any())
             {
-                Log.Info("No previous information found for patient in PVK");
+                Log.Information("No previous information found for patient in PVK");
                 return null;
             }
 
             var uniquePatientKeys = matchingPatientIDs
-                .Select(pid => pid.fk_patient_key)
+                .Select(pid => pid.fk_patient_id)
                 .Distinct()
                 .ToList();
 
-            var patients = _context.Patient
+            var patients = _context.Patients
                 .Include(p => p.pvk_events)
-                .Where(p => uniquePatientKeys.Contains(p.patient_key))
+                .Where(p => uniquePatientKeys.Contains(p.id))
                 .ToList();
 
             foreach (var patient in patients)
@@ -121,7 +118,7 @@ namespace PvkBroker.Kodeliste
                 {
                     try
                     {
-                        bool isReserved = Encryption.DecryptBool(lastEvent.is_reserved_aes.ToString());
+                        isReserved = Encryption.DecryptBool(lastEvent.is_reserved_aes.ToString());
                     }
                     catch (Exception ex)
                     {
@@ -130,7 +127,7 @@ namespace PvkBroker.Kodeliste
                 }
                 var reservation = new PatientReservation
                 {
-                    PatientKey = patient.patient_key,
+                    PatientId = patient.id,
                     IsReserved = isReserved,
                     EventTime = lastEvent?.event_time,
                     DateAdded = patient.dt_added
@@ -144,9 +141,11 @@ namespace PvkBroker.Kodeliste
             try
             {
                 var isReservedAes = Encryption.EncryptBool(isReserved);
+                int patientId = _cache.GetPatientId(patientKey);
+
                 var newEvent = new PvkEvent
                 {
-                    fk_patient_key = patientKey,
+                    fk_patient_id = patientId,
                     is_reserved_aes = isReservedAes,
                     fk_sync_id = SyncId,
                 };
@@ -168,15 +167,15 @@ namespace PvkBroker.Kodeliste
                 var newSync = new PvkSync
                 {
                     new_reservations = reservationDelta.NewReservations.Count,
-                    new_reservation_removals = reservationDelta.WithdrawnReservations.Count,
+                    withdrawn_reservations = reservationDelta.WithdrawnReservations.Count,
                     error_message = null,
-                    sync_time = DateTime.UtcNow
+                    dt_sync = DateTime.UtcNow
                 };
 
                 _context.PvkSyncs.Add(newSync);
                 _context.SaveChanges();
 
-                return newSync.sync_id;
+                return newSync.id;
             }
             catch (Exception ex)
             {
@@ -199,20 +198,78 @@ namespace PvkBroker.Kodeliste
 
                 // All PatientIDs with same fnr SHOULD have same patient_key, check this as a consistency check
                 bool allSimilar = patientIDs
-                    .All(pid => pid.fk_patient_key == patientIDs[0].fk_patient_key);
+                    .All(pid => pid.fk_patient_id == patientIDs[0].fk_patient_id);
                 if (!allSimilar)
                 {
                     Log.Error("PatientIDs with same fnr {fnr} have different patient_keys", fnr);
                     return null;
                 }
 
-                return patientIDs[0].fk_patient_key;
+                string patientKey = _context.Patients
+                    .FirstOrDefault(p => p.id == patientIDs[0].fk_patient_id)
+                    ?.patient_key;
+
+                return patientKey;
+            }
+        }
+
+        public void AddPatient(string name, string fnr)
+        {
+            var birth_date = DateTime.ParseExact(fnr.Substring(0, 6), "ddMMyy", CultureInfo.InvariantCulture);
+
+            if (!_context.Registries.Any(r => r.id == 1))
+            {
+                _context.Registries.Add(new Registry
+                {
+                    id = 1, // viktig!
+                    name = "KREST-XXX",
+                });
+                _context.SaveChanges();
+            }
+
+            List<PatientID> patientIDs = _cache.GetPatientIdsByFnr(fnr).ToList();
+            if (patientIDs.Count > 0)
+            {
+                Log.Information("Patient with fnr {fnr} already exists in the database", fnr);
+                return;
+            }
+
+            var patient = new Patient
+            { 
+                patient_key = PatientKey.GeneratePatientKey(), // Generate a new unique patient key
+                dt_added = DateTime.UtcNow,
+                name_aes = Encryption.Encrypt(name),
+                birth_date_aes = Encryption.Encrypt(DateTime.UtcNow.ToString("yyyy-MM-dd")), // Placeholder for birth date, should be provided
+                ois_patient_id_aes = null, // Placeholder, should be provided if available
+                epj_patient_id_aes = null, // Placeholder, should be provided if available
+                fk_registry_id = 1, // Assuming registry ID 1 is KREST-XXX, adjust as needed
+                patient_ids = new List<PatientID>()
+                {
+                    new PatientID
+                    {
+                        dt_added = DateTime.UtcNow,
+                        fnr_aes = Encryption.Encrypt(fnr),
+                        fnr_type = "F", // Assuming FNR type, adjust as needed
+                        patient = null  // avoid circular logic
+                    }
+                }
+            };
+
+            try
+            {
+                _context.Patients.Add(patient);
+                _context.SaveChanges();
+            }
+            catch (Exception ex)
+            {
+                Log.Error("Error adding patient {patientKey}: {@ex}", patient.patient_key, ex.Message);
+                throw;
             }
         }
 
         public string? GetRegisterName(string patientKey)
         {
-            string registerName = _context.Patient
+            string registerName = _context.Patients
                 .Where(p => p.patient_key == patientKey)
                 .Include(p => p.registry)
                 .Select(p => p.registry.name)
@@ -229,7 +286,7 @@ namespace PvkBroker.Kodeliste
 
         public DateTime GetPatientAddedDate(string patientKey)
         {
-            var patient = _context.Patient
+            var patient = _context.Patients
                 .FirstOrDefault(p => p.patient_key == patientKey);
             if (patient == null)
             {
@@ -243,9 +300,11 @@ namespace PvkBroker.Kodeliste
         {
             try
             {
+                int patientId = _cache.GetPatientId(eventObject.PatientKey);
+
                 var newEvent = new PvkEvent
                 {
-                    fk_patient_key = eventObject.PatientKey,
+                    fk_patient_id = patientId,
                     is_reserved_aes = Encryption.EncryptBool(eventObject.IsReserved),
                     event_time = eventObject.EventTime,
                     fk_sync_id = syncId
@@ -264,9 +323,11 @@ namespace PvkBroker.Kodeliste
         {
             try
             {
+                int patientId = _cache.GetPatientId(patientKey);
+
                 var newEvent = new PvkEvent
                 {
-                    fk_patient_key = patientKey,
+                    fk_patient_id = patientId,
                     is_reserved_aes = Encryption.EncryptBool(false),
                     event_time = DateTime.UtcNow.AddHours(-ConfigurationValues.PvkSyncTimeInHours / 2), // we don't know the time, so halfway between last sync
                     fk_sync_id = syncId

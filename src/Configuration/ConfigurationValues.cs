@@ -43,7 +43,11 @@ public static class ConfigurationValues
     public const string TestPvkSystemUrl = "https://eksternapi-helsenett.hn2.test.nhn.no";
     public const string TestInetPvkSystemUrl = "https://eksternapi.hn2.test.nhn.no";
     public const string ProdPvkSystemUrl = "https://eksternapi-helsenett.helsenorge.no";
-    
+
+    // For Haukeland box we need SQLite as DB provider
+    public const bool UseSqlite = true; // Set to true if using Haukeland box, otherwise false
+    public const string SqliteDatabaseFile = "../../Db/dev_kodeliste.db"; // Path to the SQLite database file
+
     public static string PvkSystemUrl = environment switch
     {
         "test" => TestPvkSystemUrl,
@@ -117,7 +121,7 @@ public static class ConfigurationValues
     // Switch to user-based login?
     public static string? KodelisteUsername = "cs"; //  Environment.GetEnvironmentVariable("KodelisteUsername"); // "cs";
     public static string? KodelistePassword = "InitializeComponent547"; // Environment.GetEnvironmentVariable("KodelistePassword"); // "InitializeComponent547";
-    public static string? KodelisteAesKey = "dacp1fOy5pFjaOYY1xirQSeONMJnRs8HVHca6r7SNp5SjssqqCpG7MJdP9klhu0M"; // Environment.GetEnvironmentVariable("KodelisteAesKey");
+    public static string? KodelisteAesKey = "dacp1fOy5pFjaOYY1xirQSeONMJnRs8H"; // Environment.GetEnvironmentVariable("KodelisteAesKey");
 
     // TODO: add correct URLs when REDCap setup is complete
     public static string RedcapNorpregUrl = "redcap.helse-nord.no/api/";

@@ -8,7 +8,9 @@
 	<ItemGroup>
 		<ProjectReference Include="..\Configuration\PvkBroker.Configuration.csproj" />
         <ProjectReference Include="..\Tools\PvkBroker.Tools.csproj" />
+		<ProjectReference Include="..\Datamodels\PvkBroker.Datamodels.csproj" />
         <ProjectReference Include="..\HelseID\ClientCredentials\PvkBroker.HelseId.ClientCredentials.csproj" />
+		
 	</ItemGroup>
 
 	<ItemGroup>

@@ -6,23 +6,18 @@ using System.Collections.Generic;
 using Serilog;
 using System.Security.Claims;
 
-
+using PvkBroker.Datamodels;
 using PvkBroker.Configuration;
 using PvkBroker.Pvk.ApiCaller;
 using PvkBroker.Pvk.TokenCaller;
-// using PvkBroker.Kodeliste;
+using PvkBroker.Kodeliste;
 // using PvkBroker.Redcap;
 using PvkBroker.Tools;
 using IdentityModel.Client;
 
+
 namespace PvkBroker.ConsoleApp
 {
-    public class ReservationDelta
-    {
-        public List<SimplePvkEvent> NewReservations { get; set; } = new();
-        public List<string> WithdrawnReservations { get; set; } = new();
-    }
-
     public class Orchestrations
     {
         // Handling singleton dependency injection

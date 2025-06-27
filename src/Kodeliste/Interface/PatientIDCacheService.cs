@@ -29,12 +29,18 @@ namespace PvkBroker.Kodeliste
         private void LoadCache(KodelisteDbContext dbContext)
         {
             var watch = System.Diagnostics.Stopwatch.StartNew();
-            var allPatientIds = dbContext.PatientIDs.AsNoTracking().ToList();
+            var allPatientIds = dbContext.PatientIDs.ToList();
 
             foreach (var id in allPatientIds)
             {
                 try
-                {
+                {   
+                    if (id.fnr_aes == null)
+                    {
+                        Log.Warning("PatientID with null fnr_aes found: {@id}", id);
+                        continue;
+                    }
+
                     var decryptedFnr = Encryption.Decrypt(id.fnr_aes);
                     if (string.IsNullOrEmpty(decryptedFnr))
                     {
@@ -59,7 +65,7 @@ namespace PvkBroker.Kodeliste
             
             watch.Stop();
             var elapsedMs = watch.ElapsedMilliseconds;
-            Log.Information("Loaded {count} encrypted PatientIDs in {elapsedMs} ms", allPatientIds.Count, elapsedMs);
+            Log.Information("Loaded {count} encrypted PatientIDs in {elapsedMs} ms", allPatientIds.Count, elapsedMs.ToString());
         }
 
         public void ReloadCache(KodelisteDbContext dbContext)
@@ -80,6 +86,18 @@ namespace PvkBroker.Kodeliste
                 return patientIds;
             }
             return Enumerable.Empty<PatientID>();
+        }
+
+        public int GetPatientId(string patientKey)
+        {
+            lock (_fnrToPatientIdMap)
+            {
+                var patientIds = _fnrToPatientIdMap.Values
+                    .SelectMany(list => list)
+                    .FirstOrDefault(id => id.patient?.patient_key == patientKey);
+
+                return patientIds.id;
+            }
         }
     }
 }
