@@ -14,6 +14,7 @@ using PvkBroker.Kodeliste;
 // using PvkBroker.Redcap;
 using PvkBroker.Tools;
 using IdentityModel.Client;
+using System.Linq;
 
 
 namespace PvkBroker.ConsoleApp
@@ -145,10 +146,8 @@ namespace PvkBroker.ConsoleApp
 
         public async Task<List<SimplePvkEvent>> CallPvkAndParseResponse()
         {
-            string? accessToken = await _accessTokenCaller.GetAccessToken();
 
-            // sleep 1 sec to ensure token is ready
-            await Task.Delay(1000);
+            string? accessToken = await _accessTokenCaller.GetAccessToken();
 
             if (string.IsNullOrEmpty(accessToken))
             {
@@ -156,7 +155,10 @@ namespace PvkBroker.ConsoleApp
                 throw new InvalidOperationException("Access token is null or empty. Cannot call PVK API.");
             }
 
-            ClaimsPrincipal principal = await _accessTokenCaller.ValidateAccessTokenAsync(accessToken);
+            // sleep 1 sec to ensure token is ready
+            await Task.Delay(1000);
+
+            await _accessTokenCaller.ValidateAccessTokenAsync(accessToken);
 
             List<SimplePvkEvent> newPvkEvents = await _pvkCaller.CallApiHentInnbyggereAktivePiForDefinisjon(accessToken);
 
@@ -168,6 +170,7 @@ namespace PvkBroker.ConsoleApp
             string? accessToken = await _accessTokenCaller.GetAccessToken();
 
             // sleep 1 sec to ensure token is ready
+            // Or use a more robust mechanism to ensure token is ready :-D My local machine is not NTP synced, so this is a workaround
             await Task.Delay(1000);
 
             if (string.IsNullOrEmpty(accessToken))
@@ -176,7 +179,7 @@ namespace PvkBroker.ConsoleApp
                 throw new InvalidOperationException("Access token is null or empty. Cannot call PVK API.");
             }
 
-            ClaimsPrincipal principal = await _accessTokenCaller.ValidateAccessTokenAsync(accessToken);
+            await _accessTokenCaller.ValidateAccessTokenAsync(accessToken);
 
             ApiResult<string> response = await _pvkCaller.CallApiSettInnbyggersPersonvernInnstilling(accessToken, jsonPath);
             return response;

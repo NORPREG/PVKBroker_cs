@@ -64,7 +64,7 @@ namespace PvkBroker.Kodeliste
                     .FirstOrDefault();
 
                 bool isReserved = false;
-                if (lastEvent != null)
+                if (lastEvent != null && lastEvent.is_reserved_aes != null)
                 {
                     try
                     {
@@ -109,12 +109,12 @@ namespace PvkBroker.Kodeliste
 
             foreach (var patient in patients)
             {
-                var lastEvent = patient.pvk_events
+                PvkEvent? lastEvent = patient.pvk_events
                     .OrderByDescending(e => e.event_time)
                     .FirstOrDefault();
 
                 bool isReserved = false;
-                if (lastEvent != null)
+                if (lastEvent != null && lastEvent.is_reserved_aes != null)
                 {
                     try
                     {
@@ -205,7 +205,7 @@ namespace PvkBroker.Kodeliste
                     return null;
                 }
 
-                string patientKey = _context.Patients
+                string? patientKey = _context.Patients
                     .FirstOrDefault(p => p.id == patientIDs[0].fk_patient_id)
                     ?.patient_key;
 
@@ -269,10 +269,10 @@ namespace PvkBroker.Kodeliste
 
         public string? GetRegisterName(string patientKey)
         {
-            string registerName = _context.Patients
+            string? registerName = _context.Patients
                 .Where(p => p.patient_key == patientKey)
                 .Include(p => p.registry)
-                .Select(p => p.registry.name)
+                .Select(p => p.registry != null ? p.registry.name : null)
                 .FirstOrDefault();
 
             if (registerName == null)
@@ -300,7 +300,19 @@ namespace PvkBroker.Kodeliste
         {
             try
             {
+                if (eventObject == null || eventObject.PatientKey == null)
+                {
+                    Log.Error("Event object is null, cannot add PvkEvent");
+                    return;
+                }
+
                 int patientId = _cache.GetPatientId(eventObject.PatientKey);
+
+                if (patientId == -1)
+                {
+                    Log.Error("No patient found with key {patientKey}", eventObject.PatientKey);
+                    return;
+                }   
 
                 var newEvent = new PvkEvent
                 {

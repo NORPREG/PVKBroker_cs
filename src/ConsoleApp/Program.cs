@@ -47,15 +47,17 @@ namespace PvkBroker.ConsoleApp
                 {
                     Console.WriteLine("Programmet kjørt uten argumenter, henter PVK hendelser for alle innbyggere med reservasjon.");
 
+                    /*
                     _kodeliste.AddPatient("Test 1", "13116900216");
                     _kodeliste.AddPatient("Test 2", "01011158117");
                     _kodeliste.AddPatient("Test 3", "01011270391");
                     _kodeliste.AddPatient("Test 4", "05031167584");
                     _kodeliste.AddPatient("Test 6", "12057900499");
+                    */
 
-                    List<SimplePvkEvent> pvkResponse = new List<SimplePvkEvent> { };
+                    // List<SimplePvkEvent> pvkResponse = new List<SimplePvkEvent> { };
 
-                    // List<SimplePvkEvent> pvkResponse = await _orchestration.CallPvkAndParseResponse();
+                    List<SimplePvkEvent> pvkResponse = await _orchestration.CallPvkAndParseResponse();
 
                     Console.WriteLine("Antall hendelser i PVK: " + pvkResponse.Count);
 
