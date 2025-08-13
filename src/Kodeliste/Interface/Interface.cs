@@ -217,6 +217,8 @@ namespace PvkBroker.Kodeliste
         {
             var birth_date = DateTime.ParseExact(fnr.Substring(0, 6), "ddMMyy", CultureInfo.InvariantCulture);
 
+
+            // Testing purposes
             if (!_context.Registries.Any(r => r.id == 1))
             {
                 _context.Registries.Add(new Registry
