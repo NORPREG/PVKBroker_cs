@@ -1,7 +1,9 @@
 using Microsoft.IdentityModel.Tokens;
+using Serilog;
+using System;
 using System.Runtime.InteropServices;
 using System.Security.Cryptography;
-using System;
+using System.Security.Cryptography.X509Certificates;
 using SecurityKey = HelseId.Samples.Common.Configuration.SecurityKey;
 
 namespace PvkBroker.Configuration;
@@ -38,6 +40,12 @@ public static class ConfigurationValues
     public const string ApiForPvkReadScope = $"{ApiForPvkAudience}/personverninnstilling_read";
     public const string ApiForPvkWriteScope = $"{ApiForPvkAudience}/personverninnstilling_write";
 
+    public static string[] ApiForPvkAllScopes = new[] 
+    { 
+        ApiForPvkReadScope, 
+        ApiForPvkWriteScope 
+    };
+
     public const string PvkApiScope = $"{ApiForPvkReadScope} {ApiForPvkWriteScope}"; // use this
 
     public const string TestPvkSystemUrl = "https://eksternapi-helsenett.hn2.test.nhn.no";
@@ -67,7 +75,6 @@ public static class ConfigurationValues
     public static int QuarantinePeriodInDays = 30;
     public static int PvkSyncTimeInHours = 24;
 
-
     // HelseID scopes defined at https://helseid.atlassian.net/wiki/spaces/HELSEID/pages/5603417/Scopes
     private const string GeneralHelseIdScopes = "helseid://scopes/identity/pid helseid://scopes/identity/pid_pseudonym helseid://scopes/identity/assurance_level helseid://scopes/hpr/hpr_number helseid://scopes/identity/network helseid://scopes/identity/security_level";
 
@@ -77,16 +84,8 @@ public static class ConfigurationValues
     public const string OUSOrganizationNumber = "993467049";
     public const string OUSOrganizationName = "Oslo universitetssykehus";
 
-    // ----------------------------------------------------------------------------------------------------------------------
-    // These private key JWKs match the public keys in HelseID that are attached to the corresponding client configurations:
-    // ----------------------------------------------------------------------------------------------------------------------
-    // In a production scenario, a private key MUST be secured inside the client, and NOT be set in source code.
-    // In this (test) case, the clients also share a private key.
-    // In a production environment, all clients must have separate keys.
-    // ----------------------------------------------------------------------------------------------------------------------
-
-    private static readonly string GeneralPrivateRsaKey = GetPrivateKey();
-    public static readonly SecurityKey PvkRsaKey = new(GeneralPrivateRsaKey, SecurityAlgorithms.RsaSha256);
+    private static readonly string HelseIdKeyThumbprint = "33D367292D83D446E1AF181B64CF9FBF912075E7";
+    public static readonly SecurityKey PvkRsaKey = KeyStore.GetPrivateKeyFromStore(HelseIdKeyThumbprint);
 
     // -----------------------------------------------------------------------------------------------------------------
     // Client IDs:
@@ -94,38 +93,26 @@ public static class ConfigurationValues
 
     public const string TestPvkApiClientId = "a1c7bdb1-07be-43cc-b876-95fc5c7aa180"; // Defined in current documentation
     public const string ProdPvkApiClientId = "a1c7bdb1-07be-43cc-b876-95fc5c7aa180"; // Defined in current documentation
+    public static string PvkApiClientId = environment == "prod" ? ProdPvkApiClientId : TestPvkApiClientId;
 
     public const string PvkDefinisjonGuid_1 = "56a8756c-49f7-4cb9-bfc0-ba282baf0f83"; // Defined in current documentation
     public const string PvkDefinisjonNavn_1 = "Reservasjon mot oppføring i NORPREG"; // Defined in current documentation
 
-    // public const string PvkDefinisjonGuid_1 = "2c11f0ca-7270-43f1-a473-bac36354eb3f6"; // This is WRONG Guid
-    // public const string PvkDefinisjonNavn_1 = "Proton- og stråleregister samgykke"; // This is WRONG Guid
-
     public const string PvkTypePi = "reservasjon"; // Defined in current documentation
 
-    // Same for test and test-inet
-    public static string PvkApiClientId = environment == "prod" ? ProdPvkApiClientId : TestPvkApiClientId;
-
     public const string TestPvkPartKode = "norpreg"; // Defined in current documentation
-    // public const string TestPvkPartKode = "norhhfdpreg"; // WRONG TEST
     public const string ProdPvkPartKode = "norpreg"; // Defined in current documentation
-    // public const string TestPvkPartKode = "prostraa"; // This is the OLD version for test
-
-    // Same for test and test-inet
     public static string PvkPartKode = environment == "prod" ? ProdPvkPartKode : TestPvkPartKode;
 
     // MySQL database connection string
     public const string KodelisteServer = "localhost";
     public const string KodelisteDbName =  "kodeliste";
-
-    // Switch to user-based login?
     public static string? KodelisteUsername = "cs"; //  Environment.GetEnvironmentVariable("KodelisteUsername"); // "cs";
     public static string? KodelistePassword = "InitializeComponent547"; // Environment.GetEnvironmentVariable("KodelistePassword"); // "InitializeComponent547";
     public static string? KodelisteAesKey = "dacp1fOy5pFjaOYY1xirQSeONMJnRs8H"; // Environment.GetEnvironmentVariable("KodelisteAesKey");
 
-    // TODO: add correct URLs when REDCap setup is complete
-    public static string RedcapNorpregUrl = "redcap.helse-nord.no/api/";
-    public static string RedcapKrestUrl = "redcap.helse-bergen.no/api/";
+    public static string RedcapNorpregUrl = "";
+    public static string RedcapKrestUrl = "";
 
     public static readonly Dictionary<string, string?> RedcapApiToken = new()
     {
@@ -134,39 +121,6 @@ public static class ConfigurationValues
         { "KREST-HUS", Environment.GetEnvironmentVariable("RedcapKrestHusApiToken") }
     };
 
-    public static string TargetUrl = ConfigurationValues.RedcapNorpregUrl;
-    public static string? TargetApiToken = ConfigurationValues.RedcapApiToken["NORPREG"];
-
-    public static string GetPrivateKey()
-    {
-        // Test load PEM file
-        var pem = File.ReadAllText("../../keys/test_pvk_private_key_encrypted.pem");
-        var rsa = RSA.Create();
-        rsa.ImportFromEncryptedPem(pem.ToCharArray(), "test_password");
-
-        var rsaKey = new RsaSecurityKey(rsa);
-        JsonWebKey jwk = JsonWebKeyConverter.ConvertFromRSASecurityKey(rsaKey);
-
-        string alg = "RS256"; // OK with openssl inspection
-        string use = "sig"; // check this
-
-        string GeneralPrivateRsaKey =
-            $$"""
-                { 
-                "p": "{{jwk.P}}", 
-                "kty": "{{jwk.Kty}}", 
-                "q": "{{jwk.Q}}", 
-                "d": "{{jwk.D}}", 
-                "e": "{{jwk.E}}", 
-                "use": "{{use}}", 
-                "qi": "{{jwk.QI}}", 
-                "dp": "{{jwk.DP}}", 
-                "alg": "{{alg}}", 
-                "dq": "{{jwk.DQ}}", 
-                "n": "{{jwk.N}}"               
-                }
-                """;
-
-        return GeneralPrivateRsaKey;
-    }
+    public static string TargetUrl = RedcapNorpregUrl;
+    public static string? TargetApiToken = RedcapApiToken["NORPREG"];
 }

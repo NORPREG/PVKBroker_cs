@@ -96,6 +96,12 @@ namespace PvkBroker.Kodeliste
                     .SelectMany(list => list)
                     .FirstOrDefault(id => id.patient?.patient_key == patientKey);
 
+                if (patientIds == null)
+                {
+                    Log.Warning("No PatientID found for patient key: {patientKey}", patientKey);
+                    return -1;
+                }
+
                 return patientIds.id;
             }
         }

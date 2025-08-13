@@ -49,6 +49,7 @@ public class AccessTokenCaller
             Console.WriteLine("[Gyldig access token funnet, bruker denne]");
             return cached.AccessToken;
         }
+        
         Console.WriteLine("[Ingen gyldig access token funnet, henter ny fra HelseID STS]");
 
         var httpClient = _httpClientFactory.CreateClient();
@@ -68,7 +69,13 @@ public class AccessTokenCaller
         return accessToken;
     }
 
-    public async Task<ClaimsPrincipal> ValidateAccessTokenAsync(string accessToken) {
+    public async Task ValidateAccessTokenAsync(string accessToken) {
+
+        if (string.IsNullOrEmpty(accessToken))
+        {
+            Log.Error("Access token is null or empty. Cannot call PVK API.");
+            throw new InvalidOperationException("Access token is null or empty. Cannot call PVK API.");
+        }
 
         TokenValidationParameters validationParameters = new TokenValidationParameters
         {
@@ -90,12 +97,31 @@ public class AccessTokenCaller
         try
         {
             var principal = handler.ValidateToken(accessToken, validationParameters, out _);
-            return principal;
+
+            string? userId = principal.FindFirst("sub")?.Value;
+            string[] scopes = principal.FindAll("scope").Select(c => c.Value).ToArray();
+            string scopeString = string.Join(",", scopes);
+
+            ValidateScopes(scopes);
+            Log.Information("Validated access token for user {UserId} with scopes {Scopes}", userId, scopeString);
+
         }
         catch (SecurityTokenException ex)
         {
             Log.Error("Error validating access token: {@ex}", ex);
             throw new UnauthorizedAccessException($"Token validation failed: {ex.Message}");
+        }
+    }
+
+    private void ValidateScopes(IEnumerable<string> tokenScopes)
+    {
+        foreach (var requiredScope in ConfigurationValues.ApiForPvkAllScopes)
+        {
+            if (!tokenScopes.Contains(requiredScope))
+            {
+                Log.Error("Access token does not have the required scope: {RequiredScope}", requiredScope);
+                throw new UnauthorizedAccessException($"Access token does not have the required scope: {requiredScope}");
+            }
         }
     }
 
