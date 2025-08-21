@@ -158,7 +158,7 @@ namespace PvkBroker.ConsoleApp
             // sleep 1 sec to ensure token is ready
             await Task.Delay(1000);
 
-            await _accessTokenCaller.ValidateAccessTokenAsync(accessToken);
+            // await _accessTokenCaller.ValidateAccessTokenAsync(accessToken);
 
             List<SimplePvkEvent> newPvkEvents = await _pvkCaller.CallApiHentInnbyggereAktivePiForDefinisjon(accessToken);
 
@@ -179,7 +179,7 @@ namespace PvkBroker.ConsoleApp
                 throw new InvalidOperationException("Access token is null or empty. Cannot call PVK API.");
             }
 
-            await _accessTokenCaller.ValidateAccessTokenAsync(accessToken);
+            // await _accessTokenCaller.ValidateAccessTokenAsync(accessToken);
 
             ApiResult<string> response = await _pvkCaller.CallApiSettInnbyggersPersonvernInnstilling(accessToken, jsonPath);
             return response;

@@ -8,7 +8,7 @@ using SecurityKey = HelseId.Samples.Common.Configuration.SecurityKey;
 
 namespace PvkBroker.Configuration;
 
-class KeyStore
+class KeystoreRetriever
 {
     public static string GetAlg(RsaSecurityKey rsaKey)
     {

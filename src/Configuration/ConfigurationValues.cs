@@ -10,10 +10,10 @@ namespace PvkBroker.Configuration;
 
 public static class ConfigurationValues
 {
-    public static string environment = "test-inet";
+    public static string environment = "test";
 
     // The URL for HelseID
-    public static string TestStsUrl { get;  } = "https://helseid-sts.test.nhn.no";
+    public static string TestStsUrl { get; } = "https://helseid-sts.test.nhn.no";
     public static string ProdStsUrl { get; } = "https://helseid-sts.nhn.no";
     public static string TestInetStsUrl { get; } = "https://helseid-sts.test.nhn.no";
 
@@ -75,17 +75,13 @@ public static class ConfigurationValues
     public static int QuarantinePeriodInDays = 30;
     public static int PvkSyncTimeInHours = 24;
 
-    // HelseID scopes defined at https://helseid.atlassian.net/wiki/spaces/HELSEID/pages/5603417/Scopes
-    private const string GeneralHelseIdScopes = "helseid://scopes/identity/pid helseid://scopes/identity/pid_pseudonym helseid://scopes/identity/assurance_level helseid://scopes/hpr/hpr_number helseid://scopes/identity/network helseid://scopes/identity/security_level";
-
-    public static readonly string PvkApiUrlForM2M = $"{StsUrl}:{StsPort}/{ClientCredentialsResource}";
-
     // If used, the child organization number (underenhet) must match a number in the client's whitelist as it's held by HelseID:
     public const string OUSOrganizationNumber = "993467049";
     public const string OUSOrganizationName = "Oslo universitetssykehus";
 
-    private static readonly string HelseIdKeyThumbprint = "33D367292D83D446E1AF181B64CF9FBF912075E7";
-    public static readonly SecurityKey PvkRsaKey = KeyStore.GetPrivateKeyFromStore(HelseIdKeyThumbprint);
+    private static readonly string HelseIdKeyThumbprint = "d700755bc44b52976bf73de2ad32715b0bfb5277";
+
+    public static readonly SecurityKey PvkRsaKey = KeystoreRetriever.GetPrivateKeyFromStore(HelseIdKeyThumbprint);
 
     // -----------------------------------------------------------------------------------------------------------------
     // Client IDs:

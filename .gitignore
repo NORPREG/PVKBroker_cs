@@ -356,3 +356,5 @@ buildNumber.properties
 # JDT-specific (Eclipse Java Development Tools)
 .classpath
 /LogFiles/2025-5
+/Db/dev_kodeliste.db-shm
+/Db/dev_kodeliste.db-wal

@@ -56,7 +56,6 @@ public class PvkCaller
             request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
         }
 
-
         return request;
      }
 
@@ -81,6 +80,8 @@ public class PvkCaller
             var url = $"{systemUrl}{baseUrl}?{queryString}";
         
             var request = CreateHttpRequestMessage(accessToken, url, "GET");
+
+            // await DumpHttpRequestToConsole(request);
 
             var response = await SendRequestAndHandleResponse(request);
 

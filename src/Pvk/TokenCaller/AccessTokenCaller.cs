@@ -69,6 +69,7 @@ public class AccessTokenCaller
         return accessToken;
     }
 
+    /*
     public async Task ValidateAccessTokenAsync(string accessToken) {
 
         if (string.IsNullOrEmpty(accessToken))
@@ -89,6 +90,7 @@ public class AccessTokenCaller
             ClockSkew = TimeSpan.Zero
         };
 
+        // Fetch key stored in Microsoft Certificate Vault (mmc)
         var signingKeys = await GetSigningKeysAsync(ConfigurationValues.JwksUri);
         validationParameters.IssuerSigningKeys = signingKeys;
 
@@ -124,8 +126,9 @@ public class AccessTokenCaller
             }
         }
     }
+    */
 
-    private async Task<IEnumerable<MicrosoftKey>> GetSigningKeysAsync(string jwksUri)
+    private static async Task<IEnumerable<MicrosoftKey>> GetSigningKeysAsync(string jwksUri)
     {
         var configManager = new Microsoft.IdentityModel.Protocols.ConfigurationManager<Microsoft.IdentityModel.Protocols.OpenIdConnect.OpenIdConnectConfiguration>(
             jwksUri,
