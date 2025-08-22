@@ -45,16 +45,11 @@ public class PvkCaller
         };
 
         var request = new HttpRequestMessage(method, url);
-        var dPopProof = _idPoPProofCreator.CreateDPoPProof(url, httpMethod, accessToken: accessToken);
+
+        var url_noquery = url.Split('?')[0].Split("#")[0]; // Remove query parameters for DPoP proof creation
+
+        var dPopProof = _idPoPProofCreator.CreateDPoPProof(url_noquery, httpMethod, accessToken: accessToken);
         request.SetDPoPToken(accessToken, dPopProof);
-
-        // Set the Authorization header with the access token
-        // This is because PVK doesn't implement DPoP yet ...
-
-        if (ConfigurationValues.PvkUseBearerToken)
-        {
-            request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
-        }
 
         return request;
      }

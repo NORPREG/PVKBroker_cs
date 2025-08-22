@@ -30,7 +30,6 @@ public static class ConfigurationValues
 
     public const string ClientCredentialsResource = "connect/token";
     public const string ClientAmr = "private_key_jwt";
-    public const bool PvkUseBearerToken = true; // Use bearer token for API calls until DPoP is implemented
 
     public const string CachedAccessTokenFolder = "../../keys/cached/";
     public const string CachedAccessTokenFilePath = CachedAccessTokenFolder + "access_token_cache.json";
@@ -52,9 +51,7 @@ public static class ConfigurationValues
     public const string TestInetPvkSystemUrl = "https://eksternapi.hn2.test.nhn.no";
     public const string ProdPvkSystemUrl = "https://eksternapi-helsenett.helsenorge.no";
 
-    // For Haukeland box we need SQLite as DB provider
-    public const bool UseSqlite = true; // Set to true if using Haukeland box, otherwise false
-    public const string SqliteDatabaseFile = "../../Db/dev_kodeliste.db"; // Path to the SQLite database file
+    
 
     public static string PvkSystemUrl = environment switch
     {
@@ -79,8 +76,7 @@ public static class ConfigurationValues
     public const string OUSOrganizationNumber = "993467049";
     public const string OUSOrganizationName = "Oslo universitetssykehus";
 
-    private static readonly string HelseIdKeyThumbprint = "d700755bc44b52976bf73de2ad32715b0bfb5277";
-
+    private static readonly string? HelseIdKeyThumbprint = Environment.GetEnvironmentVariable("HelseIdKeyThumbprint"); // d700755bc44b52976bf73de2ad32715b0bfb5277
     public static readonly SecurityKey PvkRsaKey = KeystoreRetriever.GetPrivateKeyFromStore(HelseIdKeyThumbprint);
 
     // -----------------------------------------------------------------------------------------------------------------
@@ -103,9 +99,14 @@ public static class ConfigurationValues
     // MySQL database connection string
     public const string KodelisteServer = "localhost";
     public const string KodelisteDbName =  "kodeliste";
-    public static string? KodelisteUsername = "cs"; //  Environment.GetEnvironmentVariable("KodelisteUsername"); // "cs";
-    public static string? KodelistePassword = "InitializeComponent547"; // Environment.GetEnvironmentVariable("KodelistePassword"); // "InitializeComponent547";
-    public static string? KodelisteAesKey = "dacp1fOy5pFjaOYY1xirQSeONMJnRs8H"; // Environment.GetEnvironmentVariable("KodelisteAesKey");
+    public static string? KodelisteUsername = Environment.GetEnvironmentVariable("KodelisteUsername"); // cs
+    public static string? KodelistePassword = Environment.GetEnvironmentVariable("KodelistePassword"); // InitializeComponent547
+    
+    // For development @ HUS we need SQLite as DB provider
+    public const bool UseSqlite = true; // Set to true if using Haukeland box, otherwise false
+    public const string SqliteDatabaseFile = "../../Db/dev_kodeliste.db"; // Path to the SQLite database file
+
+    public static string? KodelisteAesKey = Environment.GetEnvironmentVariable("KodelisteAesKey"); // dacp1fOy5pFjaOYY1xirQSeONMJnRs8H
 
     public static string RedcapNorpregUrl = "";
     public static string RedcapKrestUrl = "";

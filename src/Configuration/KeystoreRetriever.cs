@@ -49,13 +49,19 @@ class KeystoreRetriever
         return GeneralPrivateRsaKey;
     }
 
-    public static SecurityKey GetPrivateKeyFromStore(string thumbprint)
+    public static SecurityKey GetPrivateKeyFromStore(string? thumbprint)
     {
         /*
          * Private keys are initially converted from PEM to self-signed X.509 PXF using openssl
          * Then they are imported into the Windows certificate store (My / LocalMachine)
          * Remember to keep them updated! Set calendar reminder for this
          */
+
+        if (thumbprint == null)
+        {
+            Log.Error("Thumbprint is null. Cannot retrieve private key from store.");
+            throw new ArgumentNullException(nameof(thumbprint), "Thumbprint cannot be null.");
+        }
 
         using var store = new X509Store(StoreName.My, StoreLocation.LocalMachine);
         store.Open(OpenFlags.ReadOnly);
