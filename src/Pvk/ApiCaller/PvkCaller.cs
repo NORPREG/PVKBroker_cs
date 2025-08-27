@@ -46,8 +46,13 @@ public class PvkCaller
 
         var request = new HttpRequestMessage(method, url);
 
-        var url_noquery = url.Split('?')[0].Split("#")[0]; // Remove query parameters for DPoP proof creation
+        // RFC standard requires no query or fragment in the DPoP proof
+        // The next PVK version will support the full URL, but until then we strip it
 
+        var url_noquery = url.Split('?')[0].Split("#")[0];
+
+
+        // Use standard HelseID -> Microsoft.IdentityModel extension method to set DPoP proof
         var dPopProof = _idPoPProofCreator.CreateDPoPProof(url_noquery, httpMethod, accessToken: accessToken);
         request.SetDPoPToken(accessToken, dPopProof);
 
@@ -67,12 +72,22 @@ public class PvkCaller
                 { "partKode", ConfigurationValues.PvkPartKode },
                 { "pagingReference", pagingReference.ToString() }
             };
-        
-            string queryString = string.Join("&", query.Select(kvp => $"{kvp.Key}={kvp.Value}"));
+
+            string queryString;
+            using (var content = new FormUrlEncodedContent(query))
+            {
+                queryString = await content.ReadAsStringAsync();
+            }
 
             string systemUrl = ConfigurationValues.PvkSystemUrl;
             string baseUrl = ConfigurationValues.PvkHentInnbyggereAktivePiForDefinisjonUrl;
-            var url = $"{systemUrl}{baseUrl}?{queryString}";
+
+            var builder = new UriBuilder(new Uri(new Uri(systemUrl), baseUrl))
+            {
+                Query = queryString
+            };
+
+            string url = builder.Uri.ToString();
         
             var request = CreateHttpRequestMessage(accessToken, url, "GET");
 
@@ -97,14 +112,6 @@ public class PvkCaller
             }
 
             var jsonResponse = ResponseParser.ParseApiResponseHentInnbyggere(response.Data);
-            
-            string prettyJson = JsonSerializer.Serialize(jsonResponse, new JsonSerializerOptions
-            {
-                WriteIndented = true,
-                PropertyNamingPolicy = JsonNamingPolicy.CamelCase
-            });
-
-            // Console.WriteLine($"Respons før tolkning:\n {prettyJson}\n\n");
 
             if (jsonResponse == null)
             {
@@ -129,7 +136,11 @@ public class PvkCaller
     {
         string systemUrl = ConfigurationValues.PvkSystemUrl;
         string baseUrl = ConfigurationValues.PvkSettInnbyggersPersonvernInnstillingUrl;
-        var url = $"{systemUrl}{baseUrl}";
+
+        var uri = new Uri(new Uri(systemUrl), baseUrl);
+        string url = uri.ToString();
+
+
         var request = CreateHttpRequestMessage(accessToken, url, "POST");
 
         ApiRequestSettInnbygger payload = await SettInnbyggerJsonReader.ReadJsonFile(jsonPath);

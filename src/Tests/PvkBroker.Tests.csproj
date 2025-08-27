@@ -11,8 +11,8 @@
 	<ProjectReference Include="..\src\Kodeliste\PvkBroker.Kodeliste.csproj" />
 	<ProjectReference Include="..\src\HelseId\ClientCredentials\PvkBroker.HelseId.ClientCredentials.csproj" />
     <ProjectReference Include="..\src\Redcap\PvkBroker.Redcap.csproj" /> -->
-    <ProjectReference Include="..\src\Tools\PvkBroker.Tools.csproj" />
-	<ProjectReference Include="..\src\Configuration\PvkBroker.Configuration.csproj" />
+    <ProjectReference Include="..\Tools\PvkBroker.Tools.csproj" />
+	<ProjectReference Include="..\Configuration\PvkBroker.Configuration.csproj" />
   </ItemGroup>
 
 	<ItemGroup>

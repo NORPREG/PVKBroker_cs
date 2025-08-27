@@ -3,14 +3,13 @@ using System.Linq;
 using System.Security.Cryptography.X509Certificates;
 using Microsoft.IdentityModel.Tokens;
 using NUnit.Framework;
+using PvkBroker.Configuration;
 
 namespace PvkBroker.Tests.CertificateStore
 {
     [TestFixture]
     public class CertificateStoreTests
     {
-
-        private const string thumbprint = "33D367292D83D446E1AF181B64CF9FBF912075E7";
 
         [Test]
         public void Should_Load_Keys_From_Store()
@@ -19,7 +18,7 @@ namespace PvkBroker.Tests.CertificateStore
             store.Open(OpenFlags.ReadOnly);
 
             var cert = store.Certificates
-                .Find(X509FindType.FindByThumbprint, thumbprint, false)
+                .Find(X509FindType.FindByThumbprint, ConfigurationValues.HelseIdKeyThumbprint, false)
                 .OfType<X509Certificate2>()
                 .FirstOrDefault();
 

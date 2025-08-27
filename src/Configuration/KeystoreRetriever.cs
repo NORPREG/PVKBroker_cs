@@ -27,7 +27,7 @@ class KeystoreRetriever
         string use = "sig";
         string alg = GetAlg(rsaKey);
 
-        // The HelseID expects the JWK to be in a specific format
+        // The HelseID expects the JWK to be in a specific string-based format
 
         string GeneralPrivateRsaKey =
             $$"""
@@ -53,7 +53,10 @@ class KeystoreRetriever
     {
         /*
          * Private keys are initially converted from PEM to self-signed X.509 PXF using openssl
-         * Then they are imported into the Windows certificate store (My / LocalMachine)
+         * See wiki for details on how to do this.
+         * Then they are imported into the Windows certificate store (My / LocalMachine),
+         * with a thumbprint that is set as an environment variable (HelseIdKeyThumbprint).
+         * 
          * Remember to keep them updated! Set calendar reminder for this
          */
 

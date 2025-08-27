@@ -19,11 +19,17 @@ public class TokenCacher
     {
         Directory.CreateDirectory(CachedAccessTokenFolder);
 
+
+        // If no token file exists, return null
         if (!File.Exists(CachedAccessTokenFilePath))
         {
             return null;
         }
-            
+
+
+        // Try to read and deserialize the cached encrypted token
+        // Return token if OK, otherwise return null
+
         try
         {
             var json = await File.ReadAllTextAsync(CachedAccessTokenFilePath);
@@ -56,13 +62,17 @@ public class TokenCacher
 
     public static async Task SaveToCache(string accessToken, DateTime expiresAt)
     {
+
+        // Make token object with encrypted access token string
+        // !! ExpiresAt directly from response, not from token parsing
+
         var cachedToken = new CachedToken
         {
             AccessToken = Encryption.Encrypt(accessToken),
-            // AccessToken = accessToken,
             ExpiresAt = expiresAt
         };
-        
+
+        // Serialize and save to file
         var json = JsonSerializer.Serialize(cachedToken);
         await File.WriteAllTextAsync(CachedAccessTokenFilePath, json);
     }

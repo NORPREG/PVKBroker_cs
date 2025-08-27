@@ -22,6 +22,7 @@ namespace PvkBroker.ConsoleApp
     public class Orchestrations
     {
         // Handling singleton dependency injection
+
         // private readonly RedcapInterface _redcap;
         // private readonly KodelisteInterface _kodeliste;
         private readonly AccessTokenCaller _accessTokenCaller;
@@ -37,6 +38,42 @@ namespace PvkBroker.ConsoleApp
             // _kodeliste = kodeliste;
             _accessTokenCaller = accessTokenCaller;
             _pvkCaller = pvkCaller;
+        }
+
+        public async Task<List<SimplePvkEvent>> CallPvkAndParseResponse()
+        {
+
+            string? accessToken = await _accessTokenCaller.GetAccessToken();
+
+            if (string.IsNullOrEmpty(accessToken))
+            {
+                Log.Error("Access token is null or empty. Cannot call PVK API.");
+                throw new InvalidOperationException("Access token is null or empty. Cannot call PVK API.");
+            }
+
+            // sleep 1 sec to ensure token is ready
+            await Task.Delay(1000);
+
+            List<SimplePvkEvent> newPvkEvents = await _pvkCaller.CallApiHentInnbyggereAktivePiForDefinisjon(accessToken);
+
+            return newPvkEvents;
+        }
+
+        public async Task<ApiResult<string>> CallPvkAndSetDefinition(string jsonPath)
+        {
+            string? accessToken = await _accessTokenCaller.GetAccessToken();
+
+            // sleep 1 sec to ensure token is ready
+            await Task.Delay(1000);
+
+            if (string.IsNullOrEmpty(accessToken))
+            {
+                Log.Error("Access token is null or empty. Cannot call PVK API.");
+                throw new InvalidOperationException("Access token is null or empty. Cannot call PVK API.");
+            }
+
+            ApiResult<string> response = await _pvkCaller.CallApiSettInnbyggersPersonvernInnstilling(accessToken, jsonPath);
+            return response;
         }
 
         /*
@@ -143,46 +180,5 @@ namespace PvkBroker.ConsoleApp
             return Task.CompletedTask;
         }
         */
-
-        public async Task<List<SimplePvkEvent>> CallPvkAndParseResponse()
-        {
-
-            string? accessToken = await _accessTokenCaller.GetAccessToken();
-
-            if (string.IsNullOrEmpty(accessToken))
-            {
-                Log.Error("Access token is null or empty. Cannot call PVK API.");
-                throw new InvalidOperationException("Access token is null or empty. Cannot call PVK API.");
-            }
-
-            // sleep 1 sec to ensure token is ready
-            await Task.Delay(1000);
-
-            // await _accessTokenCaller.ValidateAccessTokenAsync(accessToken);
-
-            List<SimplePvkEvent> newPvkEvents = await _pvkCaller.CallApiHentInnbyggereAktivePiForDefinisjon(accessToken);
-
-            return newPvkEvents;
-        }
-
-        public async Task<ApiResult<string>> CallPvkAndSetDefinition(string jsonPath)
-        {
-            string? accessToken = await _accessTokenCaller.GetAccessToken();
-
-            // sleep 1 sec to ensure token is ready
-            // Or use a more robust mechanism to ensure token is ready :-D My local machine is not NTP synced, so this is a workaround
-            await Task.Delay(1000);
-
-            if (string.IsNullOrEmpty(accessToken))
-            {
-                Log.Error("Access token is null or empty. Cannot call PVK API.");
-                throw new InvalidOperationException("Access token is null or empty. Cannot call PVK API.");
-            }
-
-            // await _accessTokenCaller.ValidateAccessTokenAsync(accessToken);
-
-            ApiResult<string> response = await _pvkCaller.CallApiSettInnbyggersPersonvernInnstilling(accessToken, jsonPath);
-            return response;
-        }
     }
 }

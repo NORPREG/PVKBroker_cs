@@ -10,7 +10,7 @@ namespace PvkBroker.Configuration;
 
 public static class ConfigurationValues
 {
-    public static string environment = "test";
+    public static string environment = "test-inet";
 
     // The URL for HelseID
     public static string TestStsUrl { get; } = "https://helseid-sts.test.nhn.no";
@@ -51,7 +51,6 @@ public static class ConfigurationValues
     public const string TestInetPvkSystemUrl = "https://eksternapi.hn2.test.nhn.no";
     public const string ProdPvkSystemUrl = "https://eksternapi-helsenett.helsenorge.no";
 
-    
 
     public static string PvkSystemUrl = environment switch
     {
@@ -76,7 +75,7 @@ public static class ConfigurationValues
     public const string OUSOrganizationNumber = "993467049";
     public const string OUSOrganizationName = "Oslo universitetssykehus";
 
-    private static readonly string? HelseIdKeyThumbprint = Environment.GetEnvironmentVariable("HelseIdKeyThumbprint"); // d700755bc44b52976bf73de2ad32715b0bfb5277
+    private static readonly string? HelseIdKeyThumbprint = Environment.GetEnvironmentVariable("HelseIdKeyThumbprint");
     public static readonly SecurityKey PvkRsaKey = KeystoreRetriever.GetPrivateKeyFromStore(HelseIdKeyThumbprint);
 
     // -----------------------------------------------------------------------------------------------------------------
@@ -105,6 +104,7 @@ public static class ConfigurationValues
     // For development @ HUS we need SQLite as DB provider
     public const bool UseSqlite = true; // Set to true if using Haukeland box, otherwise false
     public const string SqliteDatabaseFile = "../../Db/dev_kodeliste.db"; // Path to the SQLite database file
+    public const string LogfilesFolder = "../../LogFiles/";
 
     public static string? KodelisteAesKey = Environment.GetEnvironmentVariable("KodelisteAesKey"); // dacp1fOy5pFjaOYY1xirQSeONMJnRs8H
 
