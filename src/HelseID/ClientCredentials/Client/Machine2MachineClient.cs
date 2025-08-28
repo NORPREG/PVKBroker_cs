@@ -1,11 +1,10 @@
-using IdentityModel.Client;
-using System.Text;
-using Serilog;
-
 // FROM DLL
 using HelseId.Samples.Common.Interfaces.PayloadClaimsCreators;
 using HelseId.Samples.Common.Interfaces.TokenRequests;
 using HelseId.Samples.Common.Models;
+
+using IdentityModel.Client;
+using Serilog;
 
 namespace PvkBroker.HelseId.ClientCredentials.Client;
 

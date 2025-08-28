@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using System.Text.Json;
 
 using Serilog;
+using Org.BouncyCastle.Asn1;
 
 namespace PvkBroker.Redcap
 {
@@ -19,7 +20,7 @@ namespace PvkBroker.Redcap
             _httpClientFactory = httpClientFactory;
         }
 
-        static async Task ExportAndImportAsync(string registerNavn, string recordId)
+        public async Task ExportAndImportAsync(string registerNavn, string recordId)
         {
             if (!ConfigurationValues.RedcapApiToken.TryGetValue(registerNavn, out var sourceApiToken))
             {
@@ -31,7 +32,13 @@ namespace PvkBroker.Redcap
             string sourceUrl = ConfigurationValues.RedcapKrestUrl;
 
             string targetUrl = ConfigurationValues.RedcapNorpregUrl;
-            string targetApiToken = ConfigurationValues.RedcapApiToken["NORPREG"];
+            string? targetApiToken = ConfigurationValues.RedcapApiToken["NORPREG"];
+
+            if (string.IsNullOrEmpty(targetApiToken) || string.IsNullOrEmpty(sourceApiToken))
+            {
+                Log.Error("API tokens for REDCap is not configured.");
+                return;
+            }
 
             var httpClient = _httpClientFactory.CreateClient();
 
@@ -54,7 +61,13 @@ namespace PvkBroker.Redcap
 
             var patientJson = await fetchResponse.Content.ReadAsStringAsync();
 
-            var importContent = new FormUrlEncodedContent()(new[]
+            if (string.IsNullOrWhiteSpace(patientJson) || patientJson == "[]")
+            {
+                Log.Warning($"No data found for record ID {recordId} in register {registerNavn}.");
+                return;
+            }
+
+            var importContent = new FormUrlEncodedContent(new[]
             {
                 new KeyValuePair<string, string>("token", targetApiToken),
                 new KeyValuePair<string, string>("content", "record"),
@@ -74,17 +87,25 @@ namespace PvkBroker.Redcap
 
             string result = await importResponse.Content.ReadAsStringAsync();
 
-            Log.Info("Data from {registerNavn} imported successfully to {targetUrl}: {result}", registerNavn, targetUrl, result);
+            Log.Information("Data from {registerNavn} imported successfully to {targetUrl}: {result}", registerNavn, targetUrl, result);
         }
 
-        static async Task<List<string>> GetAllRecordIdsAsync()
+        public async Task<List<string>> GetAllRecordIdsAsync()
         {
             var httpClient = _httpClientFactory.CreateClient();
             var url = ConfigurationValues.RedcapNorpregUrl;
 
+            string? targetApiToken = ConfigurationValues.RedcapApiToken["NORPREG"];
+
+            if (string.IsNullOrEmpty(targetApiToken))
+            {
+                Log.Error("API tokens for REDCap is not configured.");
+                return new List<string>();
+            }
+
             var fetchContent = new FormUrlEncodedContent(new[]
             {
-                new KeyValuePair<string, string>("token", ConfigurationValues.RedcapApiToken["NORPREG"]), 
+                new KeyValuePair<string, string>("token", targetApiToken), 
                 new KeyValuePair<string, string>("content", "record"),
                 new KeyValuePair<string, string>("action", "export"),
                 new KeyValuePair<string, string>("format", "json"),
@@ -96,31 +117,47 @@ namespace PvkBroker.Redcap
             if (!response.IsSuccessStatusCode)
             {
                 Log.Error($"Failed to fetch data from {url}: {response.StatusCode}");
-                return null;
+                return new List<string>();
             }
 
             var jsonResponse = await response.Content.ReadAsStringAsync();
             var records = JsonSerializer.Deserialize<List<Dictionary<string, JsonElement>>>(jsonResponse);
+
+            if (records == null || records.Count == 0)
+            {
+                Log.Warning($"No records found in REDCap NORPREG.");
+                return new List<string>();
+            }
 
             var recordIds = new List<string>();
             foreach (var record in records)
             {
                 if (record.TryGetValue("record_id", out var recordIdElement))
                 {
-                    recordIds.Add(recordIdElement.GetString());
+                    string recordIdElementString = recordIdElement.GetString() ?? "";
+                    if (!string.IsNullOrWhiteSpace(recordIdElementString))
+                        recordIds.Add(recordIdElementString);
                 }
             }
             return recordIds;
         }
 
-        static async Task RemovePatient(string recordId)
+        public async Task RemovePatient(string recordId)
         {
             var httpClient = _httpClientFactory.CreateClient();
             var url = ConfigurationValues.RedcapNorpregUrl;
 
+            var targetApiToken = ConfigurationValues.RedcapApiToken["NORPREG"];
+
+            if (string.IsNullOrEmpty(targetApiToken))
+            {
+                Log.Error("API token for REDCap NORPREG is not configured.");
+                return;
+            }
+
             var removeContent = new FormUrlEncodedContent(new[]
             {
-                new KeyValuePair<string, string>("token", ConfigurationValues.RedcapApiToken["NORPREG"]),
+                new KeyValuePair<string, string>("token", targetApiToken),
                 new KeyValuePair<string, string>("content", "record"),
                 new KeyValuePair<string, string>("action", "delete"),
                 new KeyValuePair<string, string>("returnFormat", "json"),
@@ -132,7 +169,7 @@ namespace PvkBroker.Redcap
                 Log.Error($"Failed to delete data from {url}: {response.StatusCode}");
                 return;
             }
-            Log.Info("Patient with record ID {recordId} removed successfully from {url}", recordId, url);
+            Log.Information("Patient with record ID {recordId} removed successfully from {url}", recordId, url);
         }
     }
 }

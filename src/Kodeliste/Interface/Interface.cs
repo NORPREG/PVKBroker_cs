@@ -1,20 +1,12 @@
-﻿using System.CommandLine;
-using System.Collections.Generic;
-using MySql.Data;
-using MySql.Data.MySqlClient;
+﻿using System.Collections.Generic;
 using Microsoft.EntityFrameworkCore;
 using Serilog;
 using System.Linq;
-
 using System.Globalization;
+using System;
+using System.Data;
 
 using PvkBroker.Configuration;
-using System;
-using System.ComponentModel;
-using System.Data;
-using System.Data.Common;
-using Microsoft.AspNetCore.Routing.Constraints;
-
 using PvkBroker.Datamodels;
 using PvkBroker.Tools;
 
@@ -80,6 +72,7 @@ namespace PvkBroker.Kodeliste
                 pastientReservations.Add(new PatientReservation
                 {
                     PatientId = patient.id,
+                    PatientKey = patient.patient_key,
                     IsReserved = isReserved,
                     EventTime = lastEvent?.event_time,
                     DateAdded = patient.dt_added
@@ -269,8 +262,14 @@ namespace PvkBroker.Kodeliste
             }
         }
 
-        public string? GetRegisterName(string patientKey)
+        public string? GetRegisterName(string? patientKey)
         {
+            if (string.IsNullOrEmpty(patientKey))
+            {
+                Log.Error("Patient key is null or empty");
+                return null;
+            }
+
             string? registerName = _context.Patients
                 .Where(p => p.patient_key == patientKey)
                 .Include(p => p.registry)

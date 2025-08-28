@@ -1,21 +1,15 @@
-using Microsoft.Extensions.Hosting;
 using System;
-using System.Threading;
 using System.Threading.Tasks;
 using System.Collections.Generic;
 using Serilog;
-using System.Security.Claims;
+using System.Linq;
 
 using PvkBroker.Datamodels;
 using PvkBroker.Configuration;
 using PvkBroker.Pvk.ApiCaller;
 using PvkBroker.Pvk.TokenCaller;
 using PvkBroker.Kodeliste;
-// using PvkBroker.Redcap;
-using PvkBroker.Tools;
-using IdentityModel.Client;
-using System.Linq;
-
+using PvkBroker.Redcap;
 
 namespace PvkBroker.ConsoleApp
 {
@@ -23,19 +17,19 @@ namespace PvkBroker.ConsoleApp
     {
         // Handling singleton dependency injection
 
-        // private readonly RedcapInterface _redcap;
-        // private readonly KodelisteInterface _kodeliste;
+        private readonly RedcapInterface _redcap;
+        private readonly KodelisteInterface _kodeliste;
         private readonly AccessTokenCaller _accessTokenCaller;
         private readonly PvkCaller _pvkCaller;
 
         public Orchestrations(
-            // RedcapInterface redcap,
-            // KodelisteInterface kodeliste,
+            RedcapInterface redcap,
+            KodelisteInterface kodeliste,
             AccessTokenCaller accessTokenCaller,
             PvkCaller pvkCaller)
         {
-            // _redcap = redcap;
-            // _kodeliste = kodeliste;
+            _redcap = redcap;
+            _kodeliste = kodeliste;
             _accessTokenCaller = accessTokenCaller;
             _pvkCaller = pvkCaller;
         }
@@ -76,14 +70,20 @@ namespace PvkBroker.ConsoleApp
             return response;
         }
 
-        /*
         public async Task HandleNewReservations(List<SimplePvkEvent> newReservations, int pvkSyncId) { 
             Log.Information("Found {NewReservations} new reservation events in PVK sync", newReservations.Count);
             foreach (SimplePvkEvent patient in newReservations)
             {
                 try {
-                    string registerName = _kodeliste.GetRegisterName(patient.PatientKey);
-                    _kodeliste.AddPvkEvent(patient.PatientKey, pvkSyncId);
+                     string? registerName = _kodeliste.GetRegisterName(patient.PatientKey);
+
+                    if (patient.PatientKey == null)
+                    {
+                        Log.Warning("PatientKey is null for a new reservation. Skipping this entry.");
+                        continue;
+                    }
+
+                    _kodeliste.AddPvkEvent(patient.PatientKey, true, pvkSyncId);
                     await _redcap.RemovePatient(patient.PatientKey);
                     Log.Information("Removing patient {patient} from NORPREG due to reservation", patient.PatientKey);
                 }
@@ -103,6 +103,13 @@ namespace PvkBroker.ConsoleApp
                 {
                     var registerName = _kodeliste.GetRegisterName(patientKey);
                     _kodeliste.AddPvkEventWithdrawn(patientKey, pvkSyncId);
+
+                    if (registerName == null)
+                    {
+                        Log.Warning("Register name is null for patient {patient}. Skipping this entry.", patientKey);
+                        continue;
+                    }
+
                     await _redcap.ExportAndImportAsync(patientKey, registerName);
                     Log.Information("Adding patient {patient} to NORPREG due to withdrawn reservation", patientKey);
                 }
@@ -117,16 +124,29 @@ namespace PvkBroker.ConsoleApp
         public async Task HandleNewPatients()
         {
             var quarantinePeriod = DateTime.Now.AddDays(-ConfigurationValues.QuarantinePeriodInDays);
-            List<string> patientKeysInRedcap = new HashSet<string>(_redcap.GetAllRecordIdsAsync());
+            List<string> patientKeysInRedcap = await _redcap.GetAllRecordIdsAsync();
             List<PatientReservation> updatedPatientsReservations = _kodeliste.GetPatientReservations();
 
             foreach (var patient in updatedPatientsReservations)
             {
-                if (!patient.IsReserved && patient.dt_added < quarantinePeriod && !patientKeysInRedcap.Contains(patient.PatientKey))
+                if (patient.PatientKey == null)
+                {
+                    Log.Warning("PatientKey is null for a patient reservation. Skipping this entry.");
+                    continue;
+                }
+
+                if (!patient.IsReserved && patient.DateAdded < quarantinePeriod && !patientKeysInRedcap.Contains(patient.PatientKey))
                 {
                     try
                     {
                         var registerName = _kodeliste.GetRegisterName(patient.PatientKey);
+
+                        if (registerName == null)
+                        {
+                            Log.Warning("Register name is null for patient {patient}. Skipping this entry.", patient.PatientKey);
+                            continue;
+                        }
+
                         await _redcap.ExportAndImportAsync(patient.PatientKey, registerName);
                         Log.Information("Adding patient {patient} to NORPREG after quarantine period", patient.PatientKey);
                     }
@@ -143,18 +163,41 @@ namespace PvkBroker.ConsoleApp
         {
 
             var reservationDelta = new ReservationDelta();
-            var currentReservations = _kodeliste.GetPatientReservations();
+            List<PatientReservation> currentReservations = _kodeliste.GetPatientReservations();
+
+            if (currentReservations.Count == 0)
+            {
+                Log.Information("No current reservations found in the database.");
+                return reservationDelta; // Return empty delta if no current reservations
+            }
 
             // Create a dictionary for fast lookup of newPvkEvents by PatientKey
-            var newPvkEventsLookup = newPvkEvents.ToDictionary(e => e.PatientKey);
-            var currentReservationsLookup = currentReservations.ToDictionary(r => r.PatientKey);
+            // PatientKey is added post hoc so filter out any nulls here to avoid exceptions
+
+            var newPvkEventsLookup = newPvkEvents
+                .Where(e => e.PatientKey != null) 
+                .ToDictionary(e => e.PatientKey!);
+
+            var currentReservationsLookup = currentReservations
+                .Where(r => r.PatientKey != null)
+                .ToDictionary(r => r.PatientKey!);
 
             // Find new reservations
             foreach (var newPvkEvent in newPvkEvents)
             {
-                if (!currentReservationsLookup.ContainsKey(newPvkEvent.PatientKey))
+                
+                // PatientKey cannot be zero here since we just filtered them out
+                if (!currentReservationsLookup.ContainsKey(newPvkEvent.PatientKey!))
                 {
-                    reservationDelta.NewReservations.Add(newPvkEvent);
+                    PatientReservation newReservation = new PatientReservation
+                    {
+                        PatientKey = newPvkEvent.PatientKey,
+                        IsReserved = newPvkEvent.IsReserved,
+                        EventTime = newPvkEvent.EventTime,
+                        DateAdded = DateTime.Now
+                    };
+
+                    reservationDelta.NewReservations.Add(newReservation);
                 }
             }
 
@@ -162,9 +205,12 @@ namespace PvkBroker.ConsoleApp
             // What's the response (sistEndretTidspunkt) for withdrawn reservations? -- check in test!
             foreach (var currentReservation in currentReservations)
             {
-                if (!newPvkEventsLookup.ContainsKey(currentReservation.PatientKey))
+                
+                // PatientKey cannot be zero here since we just filtered them out
+                if (!newPvkEventsLookup.ContainsKey(currentReservation.PatientKey!))
                 {
-                    reservationDelta.WithdrawnReservations.Add(currentReservation.PatientKey);
+                    
+                    reservationDelta.WithdrawnReservations.Add(currentReservation);
                 }
             }
 
@@ -175,10 +221,9 @@ namespace PvkBroker.ConsoleApp
         {
             foreach (var eventItem in pvkEvents)
             {
-                eventItem.PatientKey = _kodeliste.GetPatientKey(eventItem.PatientID);
+                eventItem.PatientKey = _kodeliste.GetPatientKey(eventItem.PatientFnr);
             }
             return Task.CompletedTask;
         }
-        */
     }
 }

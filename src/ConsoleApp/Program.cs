@@ -1,20 +1,21 @@
-using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging;
 using PvkBroker.Configuration;
 using PvkBroker.Pvk.ApiCaller;
 using PvkBroker.Pvk.TokenCaller;
 using PvkBroker.Kodeliste;
-// using PvkBroker.Redcap;
+using PvkBroker.Redcap;
 using PvkBroker.Tools;
+using PvkBroker.Datamodels;
+
 using Serilog;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
 using System;
+using System.Net.Http;
+using System.Security.Authentication;
 using System.Collections.Generic;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Threading.Tasks;
-using PvkBroker.Datamodels;
-using static IdentityModel.OidcConstants;
 
 namespace PvkBroker.ConsoleApp
 {
@@ -104,8 +105,20 @@ namespace PvkBroker.ConsoleApp
             services.AddSingleton<Encryption>();
             services.AddSingleton<Orchestrations>();
             services.AddSingleton<KodelisteInterface>();
+            services.AddSingleton<RedcapInterface>();
             services.AddSingleton<PatientIDCacheService>();
-            services.AddHttpClient();
+            services.AddHttpClient("HelseID", client =>
+            { 
+
+            })
+            .ConfigurePrimaryHttpMessageHandler(() => 
+            {
+                return new HttpClientHandler
+                {
+                    SslProtocols = SslProtocols.Tls13 | SslProtocols.Tls12,
+                    CheckCertificateRevocationList = true
+                };
+            });
 
             if (ConfigurationValues.UseSqlite)
             {
@@ -120,8 +133,8 @@ namespace PvkBroker.ConsoleApp
                 {
                     string Server = ConfigurationValues.KodelisteServer;
                     string DatabaseName = ConfigurationValues.KodelisteDbName;
-                    string UserName = ConfigurationValues.KodelisteUsername;
-                    string Password = ConfigurationValues.KodelistePassword;
+                    string? UserName = ConfigurationValues.KodelisteUsername;
+                    string? Password = ConfigurationValues.KodelistePassword;
                     string connString = $"Server={Server};Database={DatabaseName};User Id={UserName};Password={Password};";
                     options.UseMySql(connString, ServerVersion.AutoDetect(connString));
                 });

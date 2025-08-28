@@ -1,21 +1,13 @@
-using Azure;
-using HelseId.Samples.Common.Configuration;
+using Serilog;
+using System.Text;
+using IdentityModel.Client;
+
 // FROM DLL
-using HelseId.Samples.Common.Endpoints;
+using HelseId.Samples.Common.Configuration;
 using HelseId.Samples.Common.Interfaces.JwtTokens;
 using HelseId.Samples.Common.JwtTokens;
-using HelseId.Samples.Common.Models;
-using IdentityModel.Client;
-using Microsoft.OpenApi.Validations;
+
 using PvkBroker.Configuration;
-using PvkBroker.HelseId.ClientCredentials.Client;
-using PvkBroker.HelseId.ClientCredentials.Configuration;
-using Serilog;
-using System;
-using System.Net.Http;
-using System.Net.Http.Headers;
-using System.Text;
-using System.Text.Json;
 using PvkBroker.Datamodels;
 
 namespace PvkBroker.Pvk.ApiCaller;
@@ -222,43 +214,17 @@ public class PvkCaller
         }
     }
 
-    public static async Task LogHttpResponseToConsole(HttpResponseMessage response)
-    {
-        Console.WriteLine("---- HTTP RESPONSE ----");
-        Console.WriteLine($"Status: {(int)response.StatusCode} {response.ReasonPhrase}");
-
-        Console.WriteLine("Headers:");
-        foreach (var header in response.Headers)
-        {
-            Console.WriteLine($"{header.Key}: {string.Join(", ", header.Value)}");
-        }
-
-        if (response.Content != null)
-        {
-            Console.WriteLine("Content Headers:");
-            foreach (var header in response.Content.Headers)
-            {
-                Console.WriteLine($"{header.Key}: {string.Join(", ", header.Value)}");
-            }
-
-            string body = await response.Content.ReadAsStringAsync();
-            Console.WriteLine("Body:");
-            Console.WriteLine(body);
-        }
-
-        Console.WriteLine("------------------------");
-    }
-
     public async Task<ApiResult<string>> SendRequestAndHandleResponse(HttpRequestMessage request)
     {
         // await DumpHttpRequestToConsole(request);
-        var httpClient = _httpClientFactory.CreateClient();
+        var httpClient = _httpClientFactory.CreateClient("HelseID"); // Force TLS 1.3
 
         try {
 
             httpClient.Timeout = TimeSpan.FromSeconds(10);
             var response = await httpClient.SendAsync(request);
-            await LogHttpResponseToConsole(response);
+            
+            // await LogHttpResponseToConsole(response);
 
             if (response.IsSuccessStatusCode)
             {
@@ -307,6 +273,33 @@ public class PvkCaller
                 ErrorMessage = $"An unexpected error occurred: {ex.Message}"
             };
         }
+    }
+
+    public static async Task LogHttpResponseToConsole(HttpResponseMessage response)
+    {
+        Console.WriteLine("---- HTTP RESPONSE ----");
+        Console.WriteLine($"Status: {(int)response.StatusCode} {response.ReasonPhrase}");
+
+        Console.WriteLine("Headers:");
+        foreach (var header in response.Headers)
+        {
+            Console.WriteLine($"{header.Key}: {string.Join(", ", header.Value)}");
+        }
+
+        if (response.Content != null)
+        {
+            Console.WriteLine("Content Headers:");
+            foreach (var header in response.Content.Headers)
+            {
+                Console.WriteLine($"{header.Key}: {string.Join(", ", header.Value)}");
+            }
+
+            string body = await response.Content.ReadAsStringAsync();
+            Console.WriteLine("Body:");
+            Console.WriteLine(body);
+        }
+
+        Console.WriteLine("------------------------");
     }
 
     private async Task DumpHttpRequestToConsole(HttpRequestMessage request)

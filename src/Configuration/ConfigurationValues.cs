@@ -1,16 +1,10 @@
-using Microsoft.IdentityModel.Tokens;
-using Serilog;
-using System;
-using System.Runtime.InteropServices;
-using System.Security.Cryptography;
-using System.Security.Cryptography.X509Certificates;
 using SecurityKey = HelseId.Samples.Common.Configuration.SecurityKey;
 
 namespace PvkBroker.Configuration;
 
 public static class ConfigurationValues
 {
-    public static string environment = "test-inet";
+    public static string environment = "test";
 
     // The URL for HelseID
     public static string TestStsUrl { get; } = "https://helseid-sts.test.nhn.no";
@@ -25,12 +19,6 @@ public static class ConfigurationValues
         _ => throw new ArgumentException("Invalid environment specified")
     };
 
-    public static string StsPort = "443";
-    public static string JwksUri = $"{StsUrl}/.well-known/openid-configuration";
-
-    public const string ClientCredentialsResource = "connect/token";
-    public const string ClientAmr = "private_key_jwt";
-
     public const string CachedAccessTokenFolder = "../../keys/cached/";
     public const string CachedAccessTokenFilePath = CachedAccessTokenFolder + "access_token_cache.json";
 
@@ -39,18 +27,11 @@ public static class ConfigurationValues
     public const string ApiForPvkReadScope = $"{ApiForPvkAudience}/personverninnstilling_read";
     public const string ApiForPvkWriteScope = $"{ApiForPvkAudience}/personverninnstilling_write";
 
-    public static string[] ApiForPvkAllScopes = new[] 
-    { 
-        ApiForPvkReadScope, 
-        ApiForPvkWriteScope 
-    };
-
-    public const string PvkApiScope = $"{ApiForPvkReadScope} {ApiForPvkWriteScope}"; // use this
+    public const string PvkApiScope = $"{ApiForPvkReadScope} {ApiForPvkWriteScope}"; 
 
     public const string TestPvkSystemUrl = "https://eksternapi-helsenett.hn2.test.nhn.no";
     public const string TestInetPvkSystemUrl = "https://eksternapi.hn2.test.nhn.no";
     public const string ProdPvkSystemUrl = "https://eksternapi-helsenett.helsenorge.no";
-
 
     public static string PvkSystemUrl = environment switch
     {
@@ -64,8 +45,6 @@ public static class ConfigurationValues
 
     // Don't put system URL here, happens later on
     public static string PvkHentInnbyggereAktivePiForDefinisjonUrl = $"{PvkBaseUrl}/HentInnbyggereAktivePiForDefinisjon/v2";
-    public static string PvkHentInnbyggersPiForPartUrl = $"{PvkBaseUrl}/HentInnbyggersPiForPart/v2";
-    public static string PvkSjekkInnbyggersPiStatusUrl = $"{PvkBaseUrl}/SjekkInnbyggersPiStatus/v2";
     public static string PvkSettInnbyggersPersonvernInnstillingUrl = $"{PvkBaseUrl}/SettInnbyggersPersonvernInnstilling/v2";
 
     public static int QuarantinePeriodInDays = 30;
@@ -75,7 +54,7 @@ public static class ConfigurationValues
     public const string OUSOrganizationNumber = "993467049";
     public const string OUSOrganizationName = "Oslo universitetssykehus";
 
-    private static readonly string? HelseIdKeyThumbprint = Environment.GetEnvironmentVariable("HelseIdKeyThumbprint");
+    public static readonly string? HelseIdKeyThumbprint = Environment.GetEnvironmentVariable("HelseIdKeyThumbprint");
     public static readonly SecurityKey PvkRsaKey = KeystoreRetriever.GetPrivateKeyFromStore(HelseIdKeyThumbprint);
 
     // -----------------------------------------------------------------------------------------------------------------
@@ -102,7 +81,7 @@ public static class ConfigurationValues
     public static string? KodelistePassword = Environment.GetEnvironmentVariable("KodelistePassword"); // InitializeComponent547
     
     // For development @ HUS we need SQLite as DB provider
-    public const bool UseSqlite = true; // Set to true if using Haukeland box, otherwise false
+    public static readonly bool UseSqlite = true; // Set to true if using Haukeland box, otherwise false
     public const string SqliteDatabaseFile = "../../Db/dev_kodeliste.db"; // Path to the SQLite database file
     public const string LogfilesFolder = "../../LogFiles/";
 
@@ -117,7 +96,4 @@ public static class ConfigurationValues
         { "KREST-OUS", Environment.GetEnvironmentVariable("RedcapKrestOusApiToken") },
         { "KREST-HUS", Environment.GetEnvironmentVariable("RedcapKrestHusApiToken") }
     };
-
-    public static string TargetUrl = RedcapNorpregUrl;
-    public static string? TargetApiToken = RedcapApiToken["NORPREG"];
 }

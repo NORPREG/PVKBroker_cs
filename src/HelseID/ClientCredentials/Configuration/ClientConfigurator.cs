@@ -1,6 +1,5 @@
 // FROM DLL
 using HelseId.Samples.Common.TokenRequests;
-using HelseId.Samples.Common.ApiConsumers;
 using HelseId.Samples.Common.ClientAssertions;
 using HelseId.Samples.Common.Configuration;
 using HelseId.Samples.Common.Endpoints;
@@ -11,7 +10,6 @@ using HelseId.Samples.Common.JwtTokens;
 using HelseId.Samples.Common.Models;
 using HelseId.Samples.Common.PayloadClaimsCreators;
 using HelseId.Samples.Common.TokenExpiration;
-using HelseId.Samples.Common.Interfaces.JwtTokens;
 
 using PvkBroker.Configuration;
 using PvkBroker.HelseId.ClientCredentials.Client;

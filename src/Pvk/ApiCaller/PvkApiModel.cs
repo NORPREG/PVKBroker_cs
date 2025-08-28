@@ -1,15 +1,8 @@
-using System.Text.Json;
-using System.Collections.Generic;
-using System.Threading.Tasks;
-using System.IO;
 using System.Text;  
 using Serilog;
 
 using PvkBroker.Configuration;
 using PvkBroker.Datamodels;
-
-using Microsoft.AspNetCore.StaticFiles;
-using Microsoft.Identity.Client;
 
 namespace PvkBroker.Pvk.ApiCaller;
 

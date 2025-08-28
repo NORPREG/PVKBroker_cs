@@ -1,26 +1,7 @@
-using System.Net.Http;
-using System.Net.Http.Headers;
-using System.Text.Json;
-using System.IdentityModel.Tokens.Jwt;
-using Microsoft.IdentityModel.Tokens;
-using System.Security.Claims;
-
-using IdentityModel.Client;
-
-// FROM DLL
-using HelseId.Samples.Common.JwtTokens;
-using HelseId.Samples.Common.Configuration;
-
 using PvkBroker.HelseId.ClientCredentials.Client;
 using PvkBroker.HelseId.ClientCredentials.Configuration;
-using PvkBroker.Configuration;
-
-using SecurityKey = HelseId.Samples.Common.Configuration.SecurityKey;
-using MicrosoftKey = Microsoft.IdentityModel.Tokens.SecurityKey;
-using System;
 
 using Serilog;
-
 
 namespace PvkBroker.Pvk.TokenCaller;
 
@@ -58,9 +39,11 @@ public class AccessTokenCaller
 
         // No valid token in cache, get new from HelseID STS
         // Create new HttpClient (Dependency Injection) and give it to _client
+        // Use the HelseID configuration to force TLS 1.3
 
         Log.Information("[Ingen gyldig access token funnet, henter ny fra HelseID STS]");
-        var httpClient = _httpClientFactory.CreateClient();
+
+        var httpClient = _httpClientFactory.CreateClient("HelseID");
         var tokenResponse = await _client.GetAccessToken(httpClient);
 
         // Should not happen

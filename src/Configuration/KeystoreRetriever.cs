@@ -1,8 +1,5 @@
 using Microsoft.IdentityModel.Tokens;
 using Serilog;
-using System;
-using System.Runtime.InteropServices;
-using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
 using SecurityKey = HelseId.Samples.Common.Configuration.SecurityKey;
 
@@ -27,6 +24,9 @@ class KeystoreRetriever
         string use = "sig";
         string alg = GetAlg(rsaKey);
 
+        // Not in original code, but needed for correct HelseID handshake
+        string? kid = ConfigurationValues.HelseIdKeyThumbprint;
+
         // The HelseID expects the JWK to be in a specific string-based format
 
         string GeneralPrivateRsaKey =
@@ -41,6 +41,7 @@ class KeystoreRetriever
                     "qi": "{{jwk.QI}}", 
                     "dp": "{{jwk.DP}}", 
                     "alg": "{{alg}}", 
+                    "kid": "{{kid}}",
                     "dq": "{{jwk.DQ}}", 
                     "n": "{{jwk.N}}"               
                     }
@@ -99,6 +100,11 @@ class KeystoreRetriever
         // return rsaKey;
 
         string GeneralPrivateRsaKey = ConvertRsaKeyToJWKSTring(rsaKey);
-        return new(GeneralPrivateRsaKey, GetAlg(rsaKey));
+        SecurityKey securityKey = new(GeneralPrivateRsaKey, GetAlg(rsaKey));
+
+        // Add KID
+        // securityKey.KeyId = cert.Thumbprint?.ToLowerInvariant();
+
+        return securityKey;
     }
 }

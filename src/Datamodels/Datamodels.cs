@@ -3,6 +3,7 @@
 public class PatientReservation
 {
     public int PatientId { get; set; }
+    public string? PatientKey { get; set; }
     public bool IsReserved { get; set; }
     public DateTime? EventTime { get; set; } // On patient side, not API call time
     public DateTime DateAdded { get; set; } // Date when the patient was added to KREST
