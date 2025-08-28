@@ -26,7 +26,6 @@ public static class ConfigurationValues
     public const string ApiForPvkAudience = "nhn:helsenorge.eksternapi";
     public const string ApiForPvkReadScope = $"{ApiForPvkAudience}/personverninnstilling_read";
     public const string ApiForPvkWriteScope = $"{ApiForPvkAudience}/personverninnstilling_write";
-
     public const string PvkApiScope = $"{ApiForPvkReadScope} {ApiForPvkWriteScope}"; 
 
     public const string TestPvkSystemUrl = "https://eksternapi-helsenett.hn2.test.nhn.no";
