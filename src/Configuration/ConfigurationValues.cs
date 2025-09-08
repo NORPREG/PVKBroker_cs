@@ -4,12 +4,14 @@ namespace PvkBroker.Configuration;
 
 public static class ConfigurationValues
 {
-    public static string environment = "test";
+    public static string environment = "test-inet";
 
     // The URL for HelseID
     public static string TestStsUrl { get; } = "https://helseid-sts.test.nhn.no";
     public static string ProdStsUrl { get; } = "https://helseid-sts.nhn.no";
     public static string TestInetStsUrl { get; } = "https://helseid-sts.test.nhn.no";
+
+    // public static string TestInetStsUrl { get; } = "https://samsvarstesting-sts-test.helseid.sky.nhn.no/bc9771e4-74e2-46fc-be4b-44d56f932d18";
 
     public static string StsUrl = environment switch
     {

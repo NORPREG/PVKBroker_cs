@@ -17,46 +17,15 @@ class KeystoreRetriever
         };
     }
 
-    public static string ConvertRsaKeyToJWKSTring(RsaSecurityKey rsaKey)
-    {
-        JsonWebKey jwk = JsonWebKeyConverter.ConvertFromRSASecurityKey(rsaKey);
-
-        string use = "sig";
-        string alg = GetAlg(rsaKey);
-
-        // Not in original code, but needed for correct HelseID handshake
-        string? kid = ConfigurationValues.HelseIdKeyThumbprint;
-
-        // The HelseID expects the JWK to be in a specific string-based format
-
-        string GeneralPrivateRsaKey =
-            $$"""
-                    { 
-                    "p": "{{jwk.P}}", 
-                    "kty": "{{jwk.Kty}}", 
-                    "q": "{{jwk.Q}}", 
-                    "d": "{{jwk.D}}", 
-                    "e": "{{jwk.E}}", 
-                    "use": "{{use}}", 
-                    "qi": "{{jwk.QI}}", 
-                    "dp": "{{jwk.DP}}", 
-                    "alg": "{{alg}}", 
-                    "kid": "{{kid}}",
-                    "dq": "{{jwk.DQ}}", 
-                    "n": "{{jwk.N}}"               
-                    }
-                    """;
-
-        return GeneralPrivateRsaKey;
-    }
-
     public static SecurityKey GetPrivateKeyFromStore(string? thumbprint)
     {
         /*
          * Private keys are initially converted from PEM to self-signed X.509 PXF using openssl
-         * See wiki for details on how to do this.
+         * See NORPREG wiki for details on how to do this.
+         * 
          * Then they are imported into the Windows certificate store (My / LocalMachine),
          * with a thumbprint that is set as an environment variable (HelseIdKeyThumbprint).
+         * [change this to LocalUser -> SrvAcc with prod key]
          * 
          * Remember to keep them updated! Set calendar reminder for this
          */
@@ -106,5 +75,38 @@ class KeystoreRetriever
         // securityKey.KeyId = cert.Thumbprint?.ToLowerInvariant();
 
         return securityKey;
+    }
+
+    public static string ConvertRsaKeyToJWKSTring(RsaSecurityKey rsaKey)
+    {
+        JsonWebKey jwk = JsonWebKeyConverter.ConvertFromRSASecurityKey(rsaKey);
+
+        string use = "sig";
+        string alg = GetAlg(rsaKey);
+
+        // Not in original code, but needed for correct HelseID handshake
+        string? kid = ConfigurationValues.HelseIdKeyThumbprint;
+
+        // The HelseID expects the JWK to be in a specific string-based format
+
+        string GeneralPrivateRsaKey =
+            $$"""
+                    { 
+                    "p": "{{jwk.P}}", 
+                    "kty": "{{jwk.Kty}}", 
+                    "q": "{{jwk.Q}}", 
+                    "d": "{{jwk.D}}", 
+                    "e": "{{jwk.E}}", 
+                    "use": "{{use}}", 
+                    "qi": "{{jwk.QI}}", 
+                    "dp": "{{jwk.DP}}", 
+                    "alg": "{{alg}}", 
+                    "kid": "{{kid}}",
+                    "dq": "{{jwk.DQ}}", 
+                    "n": "{{jwk.N}}"               
+                    }
+                    """;
+
+        return GeneralPrivateRsaKey;
     }
 }
