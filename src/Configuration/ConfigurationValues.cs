@@ -61,7 +61,7 @@ public static class ConfigurationValues
     // -----------------------------------------------------------------------------------------------------------------
 
     public const string TestPvkApiClientId = "a1c7bdb1-07be-43cc-b876-95fc5c7aa180"; // Defined in current documentation
-    public const string ProdPvkApiClientId = "a1c7bdb1-07be-43cc-b876-95fc5c7aa180"; // Defined in current documentation
+    public const string ProdPvkApiClientId = "f7d1c76c-ba68-411e-8dc3-113aacd37d48"; // Defined in current documentation
     public static string PvkApiClientId = environment == "prod" ? ProdPvkApiClientId : TestPvkApiClientId;
 
     public const string PvkDefinisjonGuid_1 = "56a8756c-49f7-4cb9-bfc0-ba282baf0f83"; // Defined in current documentation
