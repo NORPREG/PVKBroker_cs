@@ -39,7 +39,7 @@ public class AccessTokenCaller
 
         // No valid token in cache, get new from HelseID STS
         // Create new HttpClient (Dependency Injection) and give it to _client
-        // Use the HelseID configuration to force TLS 1.3
+        // Use the HelseID configuration to force TLS 1.2 / 1.3
 
         Log.Information("[Ingen gyldig access token funnet, henter ny fra HelseID STS]");
 
