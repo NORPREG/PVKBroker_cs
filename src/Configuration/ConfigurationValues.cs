@@ -4,7 +4,7 @@ namespace PvkBroker.Configuration;
 
 public static class ConfigurationValues
 {
-    public static string environment = "test-inet";
+    public static string environment = "prod";
 
     // The URL for HelseID
     public static string TestStsUrl { get; } = "https://helseid-sts.test.nhn.no";
@@ -62,18 +62,15 @@ public static class ConfigurationValues
     // Client IDs:
     // -----------------------------------------------------------------------------------------------------------------
 
-    public const string TestPvkApiClientId = "a1c7bdb1-07be-43cc-b876-95fc5c7aa180"; // Defined in current documentation
-    public const string ProdPvkApiClientId = "a1c7bdb1-07be-43cc-b876-95fc5c7aa180"; // Defined in current documentation
+    public const string TestPvkApiClientId = "a1c7bdb1-07be-43cc-b876-95fc5c7aa180";
+    public const string ProdPvkApiClientId = "f7d1c76c-ba68-411e-8dc3-113aacd37d48";
     public static string PvkApiClientId = environment == "prod" ? ProdPvkApiClientId : TestPvkApiClientId;
 
-    public const string PvkDefinisjonGuid_1 = "56a8756c-49f7-4cb9-bfc0-ba282baf0f83"; // Defined in current documentation
-    public const string PvkDefinisjonNavn_1 = "Reservasjon mot oppføring i NORPREG"; // Defined in current documentation
+    public const string PvkDefinisjonGuid_1 = "56a8756c-49f7-4cb9-bfc0-ba282baf0f83";
+    public const string PvkDefinisjonNavn_1 = "Reservasjon mot oppføring i NORPREG";
 
-    public const string PvkTypePi = "reservasjon"; // Defined in current documentation
-
-    public const string TestPvkPartKode = "norpreg"; // Defined in current documentation
-    public const string ProdPvkPartKode = "norpreg"; // Defined in current documentation
-    public static string PvkPartKode = environment == "prod" ? ProdPvkPartKode : TestPvkPartKode;
+    public const string PvkTypePi = "reservasjon";
+    public static string PvkPartKode = "norpreg";
 
     // MySQL database connection string
     public const string KodelisteServer = "localhost";
