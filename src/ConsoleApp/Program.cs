@@ -10,11 +10,13 @@ using Serilog;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using System;
+using System.Net;
 using System.Net.Http;
 using System.Security.Authentication;
 using System.Collections.Generic;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace PvkBroker.ConsoleApp
@@ -47,6 +49,22 @@ namespace PvkBroker.ConsoleApp
                 if (args.Length == 0)
                 {
                     Console.WriteLine("Programmet kjørt uten argumenter, henter PVK hendelser for alle innbyggere med reservasjon.");
+
+                    /*
+                    // Test HTTP Handler
+                    var handler = new HttpClientHandler
+                    {
+                        Proxy = new WebProxy("http://10.53.252.160:443"),
+                        UseProxy = true,
+                        // SslProtocols = SslProtocols.Tls13 | SslProtocols.Tls12,
+                        // ServerCertificateCustomValidationCallback = (msg, cert, chain, errors) => true
+                    };
+
+                    Console.WriteLine("Tester HTTPS kall til HelseID STS...");
+                    using var client = new HttpClient(handler);
+                    var response = await client.GetStringAsync("https://helseid-sts.test.nhn.no");
+                    Console.WriteLine(response);
+                    */
 
                     List<SimplePvkEvent> pvkResponse = await _orchestration.CallPvkAndParseResponse();
 
@@ -116,10 +134,13 @@ namespace PvkBroker.ConsoleApp
                 return new HttpClientHandler
                 {
                     SslProtocols = SslProtocols.Tls13 | SslProtocols.Tls12,
-                    CheckCertificateRevocationList = true
+                    CheckCertificateRevocationList = true,
+                    // Apache HTTP Connect
+                    Proxy = new WebProxy("http://10.53.252.160:443"),
+                    UseProxy = true,
                 };
             });
-
+           
             if (ConfigurationValues.UseSqlite)
             {
                 services.AddDbContext<KodelisteDbContext>(options =>

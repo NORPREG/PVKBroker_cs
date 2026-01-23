@@ -23,28 +23,38 @@ public class DiscoveryDocumentGetter : IDiscoveryDocumentGetter
         });
     }
 
-    public async Task<DiscoveryDocumentResponse> GetDiscoveryDocument()
+    public async Task<DiscoveryDocumentResponse> GetDiscoveryDocument(HttpClient httpClient)
     {
         if (_memoryCache.TryGetValue(DiscoveryDocumentKey, out DiscoveryDocumentResponse? result))
         {
             return result!;
         }
 
-        return await UpdateCacheWithNewDocument();
+        return await UpdateCacheWithNewDocument(httpClient);
     }
 
-    private async Task<DiscoveryDocumentResponse> UpdateCacheWithNewDocument()
+    private async Task<DiscoveryDocumentResponse> UpdateCacheWithNewDocument(HttpClient httpClient)
     {
-        var discoveryDocument = await CallTheMetadataUrl();
+        var discoveryDocument = await CallTheMetadataUrl(httpClient);
 
         _memoryCache.Set(DiscoveryDocumentKey, discoveryDocument);
 
         return discoveryDocument;
     }
 
-    private async Task<DiscoveryDocumentResponse> CallTheMetadataUrl()
+    private async Task<DiscoveryDocumentResponse> CallTheMetadataUrl(HttpClient httpClient)
     {
-        using var httpClient = new HttpClient();
+        // Bad architecture, want to keep the proxy settings from DI
+        /*
+        var handler = new HttpClientHandler
+        {
+            Proxy = new WebProxy(HARD_CODE?);
+            UseProxy = true,
+        };
+        */
+
+        // var httpClient = new HttpClient(handler);
+
         // This extension from the IdentityModel library calls the discovery document on the HelseID server
         var discoveryDocument = await httpClient.GetDiscoveryDocumentAsync(_stsUrl);
         if (discoveryDocument.IsError)

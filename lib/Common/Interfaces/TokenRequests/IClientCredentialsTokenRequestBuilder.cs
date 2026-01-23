@@ -9,7 +9,8 @@ public interface ITokenRequestBuilder
     Task<ClientCredentialsTokenRequest> CreateClientCredentialsTokenRequest(
         IPayloadClaimsCreator payloadClaimsCreator,
         ClientCredentialsTokenRequestParameters tokenRequestParameters,
-        string? dPoPNonce);
+        string? dPoPNonce,
+        HttpClient httpClient);
 
     /*
 
@@ -22,15 +23,18 @@ public interface ITokenRequestBuilder
     Task<RefreshTokenRequest> CreateRefreshTokenRequest(
         IPayloadClaimsCreator payloadClaimsCreator,
         RefreshTokenRequestParameters tokenRequestParameters,
-        string? dPoPNonce);
+        string? dPoPNonce,
+        HttpClient httpClient);
     
     Task<TokenExchangeTokenRequest> CreateTokenExchangeTokenRequest(
         IPayloadClaimsCreator payloadClaimsCreator,
         TokenExchangeTokenRequestParameters tokenRequestParameters,
-        string? dPoPNonce);
+        string? dPoPNonce,
+        HttpClient httpClient);
 
     Task<AuthorizationCodeTokenRequest> CreateAuthorizationCodeTokenRequest(
         IPayloadClaimsCreator payloadClaimsCreator,
         AuthorizationCodeTokenRequestParameters tokenRequestParameters,
-        string? dPoPNonce);
+        string? dPoPNonce,
+        HttpClient httpClient);
 }

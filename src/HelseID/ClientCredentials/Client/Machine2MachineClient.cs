@@ -60,7 +60,8 @@ public class Machine2MachineClient
         request = await _tokenRequestBuilder.CreateClientCredentialsTokenRequest(
             _payloadClaimsCreatorForClientAssertion,
             _tokenRequestParameters,
-            null);
+            null,
+            httpClient);
 
         var tokenResponse = await httpClient.RequestClientCredentialsTokenAsync(request);
 
@@ -69,7 +70,8 @@ public class Machine2MachineClient
             request = await _tokenRequestBuilder.CreateClientCredentialsTokenRequest(
                 _payloadClaimsCreatorForClientAssertion,
                 _tokenRequestParameters,
-                tokenResponse.DPoPNonce);
+                tokenResponse.DPoPNonce,
+                httpClient);
 
             tokenResponse = await httpClient.RequestClientCredentialsTokenAsync(request);
         }

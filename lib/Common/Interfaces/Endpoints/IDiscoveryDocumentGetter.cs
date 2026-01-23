@@ -4,5 +4,5 @@ namespace HelseId.Samples.Common.Interfaces.Endpoints;
 
 public interface IDiscoveryDocumentGetter
 {
-    Task<DiscoveryDocumentResponse> GetDiscoveryDocument();
+    Task<DiscoveryDocumentResponse> GetDiscoveryDocument(HttpClient httpClient);
 }

@@ -9,6 +9,7 @@ using HelseId.Samples.Common.JwtTokens;
 
 using PvkBroker.Configuration;
 using PvkBroker.Datamodels;
+using System.Net;
 
 namespace PvkBroker.Pvk.ApiCaller;
 
@@ -219,6 +220,20 @@ public class PvkCaller
         // await DumpHttpRequestToConsole(request);
         var httpClient = _httpClientFactory.CreateClient("HelseID"); // Force TLS 1.3
 
+        /*
+        // var handler = _httpClientFactory.CreateHandler("HelseID");
+        // var httpClient = new HttpClient(handler);
+
+        // Make custom handler, proxy handling from named handler is not "handled" properly
+        var handler = new HttpClientHandler
+        {
+            Proxy = new WebProxy(Configuration.ConfigurationValues.HttpProxy),
+            UseProxy = true,
+        };
+
+        var proxyHttpClient = new HttpClient(handler);
+        */ 
+           
         try {
 
             httpClient.Timeout = TimeSpan.FromSeconds(10);

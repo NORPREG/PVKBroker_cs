@@ -1,7 +1,9 @@
 using PvkBroker.HelseId.ClientCredentials.Client;
 using PvkBroker.HelseId.ClientCredentials.Configuration;
+using PvkBroker.Configuration;
 
 using Serilog;
+using System.Net;
 
 namespace PvkBroker.Pvk.TokenCaller;
 
@@ -43,7 +45,22 @@ public class AccessTokenCaller
 
         Log.Information("[Ingen gyldig access token funnet, henter ny fra HelseID STS]");
 
-        var httpClient = _httpClientFactory.CreateClient("HelseID");
+        // var handler = _httpClientFactory.CreateHandler("HelseID");
+        // var httpClient = new HttpClient(handler);
+
+        var httpClient = _httpClientFactory.CreateClient("HelseID"); // Force TLS 1.3
+
+        /*
+        // Make custom handler, proxy handling from named handler is not "handled" properly
+        var handler = new HttpClientHandler
+        {
+            Proxy = new WebProxy(Configuration.ConfigurationValues.HttpProxy),
+            UseProxy = true,
+        };
+
+        var proxyHttpClient = new HttpClient(handler);  
+        */
+
         var tokenResponse = await _client.GetAccessToken(httpClient);
 
         // Should not happen

@@ -21,6 +21,8 @@ public static class ConfigurationValues
         _ => throw new ArgumentException("Invalid environment specified")
     };
 
+    public static string HttpProxy = "http://10.53.252.160:443";
+
     public const string CachedAccessTokenFolder = "../../keys/cached/";
     public const string CachedAccessTokenFilePath = CachedAccessTokenFolder + "access_token_cache.json";
 
@@ -55,8 +57,12 @@ public static class ConfigurationValues
     public const string OUSOrganizationNumber = "993467049";
     public const string OUSOrganizationName = "Oslo universitetssykehus";
 
+        
+
     public static readonly string? HelseIdKeyThumbprint = Environment.GetEnvironmentVariable("HelseIdKeyThumbprint");
     public static readonly SecurityKey PvkRsaKey = KeystoreRetriever.GetPrivateKeyFromStore(HelseIdKeyThumbprint);
+
+
 
     // -----------------------------------------------------------------------------------------------------------------
     // Client IDs:

@@ -13,9 +13,9 @@ public class HelseIdEndpointsDiscoverer : IHelseIdEndpointsDiscoverer
 
     private readonly IDiscoveryDocumentGetter _discoveryDocumentGetter;
 
-    public async Task<string> GetTokenEndpointFromHelseId()
+    public async Task<string> GetTokenEndpointFromHelseId(HttpClient httpClient)
     {
-        var disco = await _discoveryDocumentGetter.GetDiscoveryDocument();
+        var disco = await _discoveryDocumentGetter.GetDiscoveryDocument(httpClient);
         return disco.TokenEndpoint!;
     }
 }

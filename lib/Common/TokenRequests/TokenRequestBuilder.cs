@@ -39,9 +39,10 @@ public class TokenRequestBuilder : ITokenRequestBuilder
     public async Task<RefreshTokenRequest> CreateRefreshTokenRequest(
         IPayloadClaimsCreator payloadClaimsCreator,
         RefreshTokenRequestParameters tokenRequestParameters,
-        string? dPoPNonce)
+        string? dPoPNonce,
+        HttpClient httpClient)
     {
-        var tokenEndpoint = await FindTokenEndpoint();
+        var tokenEndpoint = await FindTokenEndpoint(httpClient);
         var clientAssertion = BuildClientAssertion(payloadClaimsCreator, tokenRequestParameters.PayloadClaimParameters);
 
         // This class comes from the IdentityModel library and abstracts a request for a token using the refresh token grant
@@ -65,9 +66,10 @@ public class TokenRequestBuilder : ITokenRequestBuilder
     public async Task<TokenExchangeTokenRequest> CreateTokenExchangeTokenRequest(
         IPayloadClaimsCreator payloadClaimsCreator,
         TokenExchangeTokenRequestParameters tokenRequestParameters,
-        string? dPoPNonce)
+        string? dPoPNonce,
+        HttpClient httpClient)
     {
-        var tokenEndpoint = await FindTokenEndpoint();
+        var tokenEndpoint = await FindTokenEndpoint(httpClient);
         var clientAssertion = BuildClientAssertion(payloadClaimsCreator, tokenRequestParameters.PayloadClaimParameters);
 
         // This class comes from the IdentityModel library and abstracts a request for a token using the exchange token grant
@@ -90,9 +92,10 @@ public class TokenRequestBuilder : ITokenRequestBuilder
     public async Task<ClientCredentialsTokenRequest> CreateClientCredentialsTokenRequest(
         IPayloadClaimsCreator payloadClaimsCreator,
         ClientCredentialsTokenRequestParameters tokenRequestParameters,
-        string? dPoPNonce)
+        string? dPoPNonce,
+        HttpClient httpClient)
     {
-        var tokenEndpoint = await FindTokenEndpoint();
+        var tokenEndpoint = await FindTokenEndpoint(httpClient);
         var clientAssertion = BuildClientAssertion(payloadClaimsCreator, tokenRequestParameters.PayloadClaimParameters);
 
         // This class comes from the IdentityModel library and abstracts a request for a token using the client credential grant
@@ -132,9 +135,10 @@ public class TokenRequestBuilder : ITokenRequestBuilder
     public async Task<AuthorizationCodeTokenRequest> CreateAuthorizationCodeTokenRequest(
         IPayloadClaimsCreator payloadClaimsCreator,
         AuthorizationCodeTokenRequestParameters tokenRequestParameters,
-        string? dPoPNonce)
+        string? dPoPNonce,
+        HttpClient httpClient)
     {
-        var tokenEndpoint = await FindTokenEndpoint();
+        var tokenEndpoint = await FindTokenEndpoint(httpClient);
         var clientAssertion = BuildClientAssertion(payloadClaimsCreator, tokenRequestParameters.PayloadClaimParameters);
 
         // This class comes from the IdentityModel library and abstracts a request for a token using the authorization code grant
@@ -152,9 +156,9 @@ public class TokenRequestBuilder : ITokenRequestBuilder
         };
     }
 
-    private async Task<string> FindTokenEndpoint()
+    private async Task<string> FindTokenEndpoint(HttpClient httpClient)
     {
-        return await _endpointsDiscoverer.GetTokenEndpointFromHelseId();
+        return await _endpointsDiscoverer.GetTokenEndpointFromHelseId(httpClient);
     }
 
     private ClientAssertion BuildClientAssertion(IPayloadClaimsCreator payloadClaimsCreator, PayloadClaimParameters payloadClaimParameters)
