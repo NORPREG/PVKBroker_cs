@@ -236,7 +236,7 @@ public class PvkCaller
            
         try {
 
-            httpClient.Timeout = TimeSpan.FromSeconds(10);
+            httpClient.Timeout = TimeSpan.FromSeconds(60);
             var response = await httpClient.SendAsync(request);
             
             // await LogHttpResponseToConsole(response);

@@ -11,7 +11,7 @@ namespace PvkBroker.Kodeliste
         public int id { get; set; }
         public string? name { get; set; } // KREST-XXX, NORPREG
         public List<Patient> patients { get; set; } = new();// list of patients in this registry. Not for NORPREG, that'd need more modelling (many-to-many)
-        public List<RegistryExport> registry_exports { get; set; } = new();// registry export
+        // public List<RegistryExport> registry_exports { get; set; } = new();// registry export
     }
 
     public class Patient
@@ -23,26 +23,31 @@ namespace PvkBroker.Kodeliste
         public int fk_registry_id { get; set; } // foreign key to the registry
         public Registry? registry { get; set; } // registry this patient belongs to originally (KREST)
 
-        public List<PatientID> patient_ids { get; set; } = new();// list of patient IDs
+        public string? id_number_aes { get; set; } // encrypted patient ID (fnr, dnr, etc.)
+        public string? id_type { get; set; } // patient ID type (fnr, dnr, etc.)
+
+
+        public List<IDNumberHistory> id_history { get; set; } = new();// list of patient IDs
         public List<Address> addresses { get; set; } = new();// list of addresses
         public List<Course> courses { get; set; } = new();// list of courses
-        public List<PatientExport> patient_exports { get; set; } = new();// list of patient exports
-        public List<PvkEvent> pvk_events { get; set; } = new(); // List of PVK events
+        // public List<PatientExport> patient_exports { get; set; } = new();// list of patient exports
+        // public List<PvkEvent> pvk_events { get; set; } = new(); // List of PVK events
 
         public string? name_aes { get; set; } // encrypted name
         public string? birth_date_aes { get; set; } // encrypted birth date
-        public string? ois_patient_id_aes { get; set; } // encrypted OIS patient ID
-        public string? epj_patient_id_aes { get; set; } // encrypted EPJ patient ID
+        public string? ois_patient_id { get; set; } // encrypted OIS patient ID
+        public string? epj_patient_id { get; set; } // encrypted EPJ patient ID
+        public string? npr_patient_id { get; set; } // NPR patient ID (not encrypted, as it's not considered sensitive and is needed for NORPREG)
     }
 
-    public class PatientID
+    public class IDNumberHistory
     {
         public int id { get; set; }
         public Patient? patient { get; set; }
         public int fk_patient_id { get; set; } // foreign key to the patient
         public DateTime dt_added { get; set; } // datetime added to the registry
-        public string? fnr_aes { get; set; } // encrypted fnr
-        public string? fnr_type { get; set; } // patient ID type
+        public string? id_number_aes { get; set; } // encrypted fnr
+        public string? id_type { get; set; } // patient ID type
     }
 
     public class Address
@@ -63,13 +68,58 @@ namespace PvkBroker.Kodeliste
         public DateTime dt_added { get; set; } // datetime added to the registry
         public int fk_patient_id { get; set; } // foreign key to the patient
         public Patient? patient { get; set; }
-        public List<PatientExport> patient_exports { get; set; } = new();// list of patient exports
-        public int fk_datastatus_id { get; set; } // foreign key to the data status
+        // public List<PatientExport> patient_exports { get; set; } = new();// list of patient exports
+
         public DataStatus? data_status { get; set; }
         public string? ois_course_id { get; set; } // encrypted OIS course ID
         public string? epj_course_id { get; set; } // encrypted EPJ course ID
+
+        public MapSeriesUid? map_series_uid { get; set; } = new(); // mapping of series UID to encrypted pseudo key for this course
+        public MapStudyUid? map_study_uid { get; set; } = new(); // mapping of series UID to encrypted pseudo key for this course
+        public MapInstanceUid? map_instance_uid { get; set; } = new(); // mapping of series UID to encrypted pseudo key for this course
     }
 
+    public class DataStatus
+    {
+        public int id { get; set; }
+        public int fk_course_id { get; set; } // foreign key to the course
+        public Course? course { get; set; }
+        public DateTime? dt_added { get; set; } // datetime of the status update
+        public int epj_status_aes { get; set; } // encrypted EPJ status
+        public int dicom_status_aes { get; set; } // encrypted DICOM status
+        public int consent_status_aes { get; set; } // encrypted consent status
+        public int prom_status_aes { get; set; } // encrypted PROM status
+    }
+
+    public class MapSeriesUid
+    {
+        public int id { get; set; }
+        public int fk_course_id { get; set; } // foreign key to the course
+        public Course? course { get; set; }
+        public string? series_uid_orig { get; set; } // encrypted series UID
+        public string? series_uid_pseudo { get; set; } // encrypted pseudo key for this series UID
+    }
+
+    public class MapStudyUid
+    {
+        public int id { get; set; }
+        public int fk_course_id { get; set; } // foreign key to the course
+        public Course? course { get; set; }
+        public string? study_uid_orig { get; set; } // encrypted study UID
+        public string? study_uid_pseudo { get; set; } // encrypted pseudo key for this study UID
+    }
+
+    public class MapInstanceUid
+    {
+        public int id { get; set; }
+        public int fk_course_id { get; set; } // foreign key to the course
+        public Course? course { get; set; }
+        public string? instance_uid_orig { get; set; } // encrypted instance UID
+        public string? instance_uid_pseudo { get; set; } // encrypted pseudo key for this instance UID
+    }
+
+
+    /*
     public class Study
     {
         public int id { get; set; }
@@ -118,36 +168,28 @@ namespace PvkBroker.Kodeliste
         public int fk_export_id { get; set; } // foreign key to the export
         public Export? export { get; set; }
     }
+    */
 
-    public class DataStatus
-    {
-        public int id { get; set; }
-        public int fk_course_id { get; set; } // foreign key to the course
-        public Course? course { get; set; }
-        public int epj_status_aes { get; set; } // encrypted EPJ status
-        public int dicom_status_aes { get; set; } // encrypted DICOM status
-        public int consent_status_aes { get; set; } // encrypted consent status
-        public int prom_status_aes { get; set; } // encrypted PROM status
-    }
-
-    public class PvkEvent
-    {
-        public int id { get; set; }
-        public DateTime event_time { get; set; }
-        public int fk_patient_id { get; set; } // foreign key to the patient
-        public Patient? patient { get; set; }
-        public int fk_sync_id { get; set; } // foreign key to the sync
-        public PvkSync? pvk_sync { get; set; }
-        public string? is_reserved_aes { get; set; } // encrypted reservation status ("1" = reserved, "0" = not reserved)
-    }
-
-    public class PvkSync
-    {
-        public int id { get; set; }
-        public List<PvkEvent> pvk_events { get; set; } = new();
-        public DateTime dt_sync { get; set; } // datetime of the last sync
-        public int new_reservations { get; set; } // status of the sync
-        public int withdrawn_reservations { get; set; } // status of the sync
-        public string? error_message { get; set; } // error message if any
-    }
+/*
+public class PvkEvent
+{
+    public int id { get; set; }
+    public DateTime event_time { get; set; }
+    public int fk_patient_id { get; set; } // foreign key to the patient
+    public Patient? patient { get; set; }
+    public int fk_sync_id { get; set; } // foreign key to the sync
+    public PvkSync? pvk_sync { get; set; }
+    public string? is_reserved_aes { get; set; } // encrypted reservation status ("1" = reserved, "0" = not reserved)
 }
+
+public class PvkSync
+{
+    public int id { get; set; }
+    public List<PvkEvent> pvk_events { get; set; } = new();
+    public DateTime dt_sync { get; set; } // datetime of the last sync
+    public int new_reservations { get; set; } // status of the sync
+    public int withdrawn_reservations { get; set; } // status of the sync
+    public string? error_message { get; set; } // error message if any
+}
+}
+*/

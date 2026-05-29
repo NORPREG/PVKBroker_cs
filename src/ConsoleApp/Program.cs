@@ -76,12 +76,18 @@ namespace PvkBroker.ConsoleApp
                         DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
                     };
 
+                    /*
                     string jsonOutput = JsonSerializer.Serialize(pvkResponse, options);
                     if (pvkResponse.Count > 0)
                     {
                         Console.WriteLine("Alle PVK-hendelser i JSON-format:");
                         Console.WriteLine(jsonOutput);
                     }
+                    */
+
+                    // Sjekk pvkResponse mot kodeliste -> har vi aktuelle pasienter? Skriv ut pseudo_key
+
+
                 }
 
                 else if (args.Length == 1)
